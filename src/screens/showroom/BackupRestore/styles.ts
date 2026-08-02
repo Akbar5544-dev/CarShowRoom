@@ -1,0 +1,298 @@
+import {StyleSheet} from 'react-native';
+import {type AppColors} from '../../../theme';
+
+export const createStyles = (colors: AppColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  main: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    gap: 14,
+  },
+  pageHeader: {
+    marginTop: 8,
+    gap: 3,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.actionBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textDark,
+    letterSpacing: -0.68,
+    lineHeight: 30,
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.textSoft,
+    lineHeight: 18,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.actionBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textDark,
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    color: colors.textSoft,
+    lineHeight: 15,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  outlineBtn: {
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 0.75,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  outlineBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textDark,
+  },
+  primaryBtn: {
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.actionBlue,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  primaryBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    borderWidth: 0.75,
+    borderColor: colors.borderSoft,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    gap: 12,
+    shadowColor: '#0B152C',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  cardHeader: {
+    gap: 2,
+  },
+  cardEyebrow: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSoft,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textDark,
+    letterSpacing: -0.3,
+  },
+  storageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  storageIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.actionTint1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storageCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  bigValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.textDark,
+    letterSpacing: -0.4,
+  },
+  metaText: {
+    fontSize: 12,
+    color: colors.textSoft,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: colors.track,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: colors.actionBlue,
+  },
+  scheduleList: {
+    gap: 10,
+  },
+  scheduleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 0.75,
+    borderColor: colors.border,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  scheduleIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.actionTint1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scheduleCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  scheduleTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textDark,
+  },
+  scheduleSubtitle: {
+    fontSize: 11,
+    color: colors.textSoft,
+  },
+  toggle: {
+    transform: [{scaleX: 0.8}, {scaleY: 0.8}],
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  historyCol: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSoft,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  historyColSize: {
+    width: '28%',
+  },
+  historyColType: {
+    flex: 1,
+  },
+  historyColStatus: {
+    width: 80,
+    textAlign: 'right',
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  historyRowLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+  },
+  historySize: {
+    width: '28%',
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textDark,
+  },
+  historyType: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textSoft,
+  },
+  statusWrap: {
+    width: 80,
+    alignItems: 'flex-end',
+  },
+  statusBadge: {
+    minWidth: 72,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  statusSuccess: {
+    backgroundColor: 'rgba(32,180,107,0.15)',
+  },
+  statusFailed: {
+    backgroundColor: 'rgba(239,68,68,0.12)',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  statusTextSuccess: {
+    color: colors.successBright,
+  },
+  statusTextFailed: {
+    color: '#E11D48',
+  },
+});

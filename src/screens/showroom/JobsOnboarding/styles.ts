@@ -1,0 +1,202 @@
+import {StyleSheet} from 'react-native';
+import {type AppColors} from '../../../theme';
+
+export const createStyles = (colors: AppColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  main: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    gap: 14,
+  },
+  pageHeader: {
+    marginTop: 8,
+    gap: 12,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  backBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.actionBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  titleBlock: {
+    flex: 1,
+    gap: 2,
+  },
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textDark,
+    letterSpacing: -0.5,
+    lineHeight: 28,
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.textSoft,
+    lineHeight: 16,
+  },
+  hiringBtn: {
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 32,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: colors.actionBlue,
+  },
+  hiringBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    borderWidth: 0.75,
+    borderColor: colors.borderSoft,
+    padding: 18,
+    gap: 14,
+  },
+  sectionHeader: {
+    gap: 4,
+  },
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSoft,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textDark,
+  },
+  hireList: {
+    gap: 10,
+  },
+  hireItem: {
+    borderRadius: 14,
+    borderWidth: 0.75,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  hireTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  hireMain: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  hireName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textDark,
+  },
+  hireRole: {
+    fontSize: 11,
+    fontWeight: '400',
+    color: colors.textSoft,
+  },
+  progressLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.actionBlue,
+  },
+  progressTrack: {
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: colors.track,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: colors.actionBlue,
+  },
+  checklistList: {
+    gap: 8,
+  },
+  checklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 0.75,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+  },
+  checkDone: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.successBright,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkPending: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  checklistLabel: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.textDark,
+  },
+  checklistLabelDone: {
+    color: colors.textSoft,
+    textDecorationLine: 'line-through',
+  },
+  assignText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.actionBlue,
+  },
+});

@@ -1,0 +1,128 @@
+import {StyleSheet} from 'react-native';
+import {type AppColors} from '../../../theme';
+
+export const createStyles = (colors: AppColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  main: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  pageHeader: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  titleLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    minWidth: 0,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.actionBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  titleBlock: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textDark,
+    letterSpacing: -0.5,
+    lineHeight: 28,
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.textSoft,
+    lineHeight: 18,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    borderWidth: 0.75,
+    borderColor: colors.borderSoft,
+    padding: 12,
+    gap: 10,
+    shadowColor: '#0B152C',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  item: {
+    borderRadius: 18,
+    borderWidth: 0.75,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  itemLeft: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
+  },
+  userName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textDark,
+  },
+  action: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors.textSoft,
+    flexShrink: 1,
+  },
+  itemRight: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  timeAgo: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.textSoft,
+  },
+  ip: {
+    fontSize: 11,
+    fontWeight: '400',
+    color: colors.textSoft,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: colors.textSoft,
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
+});

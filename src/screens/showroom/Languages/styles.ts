@@ -1,0 +1,163 @@
+import {StyleSheet} from 'react-native';
+import {type AppColors} from '../../../theme';
+
+export const createStyles = (colors: AppColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  main: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    gap: 14,
+  },
+  pageHeader: {
+    marginTop: 8,
+    gap: 3,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.actionBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textDark,
+    letterSpacing: -0.68,
+    lineHeight: 30,
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.textSoft,
+    lineHeight: 18,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.actionBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textDark,
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    color: colors.textSoft,
+    lineHeight: 15,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    borderWidth: 0.75,
+    borderColor: colors.borderSoft,
+    paddingHorizontal: 14,
+    paddingTop: 16,
+    paddingBottom: 14,
+    gap: 14,
+    shadowColor: '#0B152C',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  cardHeader: {
+    gap: 2,
+    paddingHorizontal: 2,
+  },
+  cardEyebrow: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSoft,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textDark,
+    letterSpacing: -0.3,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  option: {
+    width: '47.5%',
+    flexGrow: 1,
+    minWidth: 140,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    minHeight: 58,
+  },
+  optionSelected: {
+    borderColor: colors.actionBlue,
+    borderWidth: 1.5,
+    backgroundColor: colors.actionTint04,
+  },
+  flagWrap: {
+    width: 22,
+    height: 16,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  optionCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+  },
+  optionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textDark,
+  },
+  optionRegion: {
+    fontSize: 11,
+    color: colors.textSoft,
+  },
+  checkWrap: {
+    width: 18,
+    height: 18,
+  },
+});
