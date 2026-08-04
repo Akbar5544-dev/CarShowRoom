@@ -10,4 +10,5 @@ export type AllEmployeesController = {
   onAddEmployeePress: () => void;
   onFilterPress: () => void;
   onProfilePress: (employee: EmployeeCardData) => void;
+  onSalaryPress: (employee: EmployeeCardData) => void;
 };

@@ -28,6 +28,9 @@ export type AddVehicleForm = {
   securityDeposit: string;
   extraKmCharge: string;
   lateReturnFee: string;
+  weekendSurge: boolean;
+  vipDiscount: boolean;
+  taxInclusive: boolean;
   insuranceProvider: string;
   policyNumber: string;
   coverageType: string;
@@ -55,11 +58,20 @@ export type AddVehicleController = {
   specSheetName: string | null;
   insuranceDocName: string | null;
   registrationDocName: string | null;
-  imageUploads: {id: string; title: string; fileName: string | null}[];
+  imageUploads: {
+    id: string;
+    title: string;
+    fileName: string | null;
+    count: number;
+  }[];
   categoryOptions: string[];
   setField: <K extends keyof AddVehicleForm>(
     key: K,
     value: AddVehicleForm[K],
+  ) => void;
+  fieldErrors: Partial<Record<keyof AddVehicleForm, string>>;
+  togglePricingFlag: (
+    key: 'weekendSurge' | 'vipDiscount' | 'taxInclusive',
   ) => void;
   onNextPress: () => void;
   onPreviousPress: () => void;

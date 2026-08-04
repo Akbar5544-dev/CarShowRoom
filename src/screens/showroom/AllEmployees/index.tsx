@@ -22,6 +22,7 @@ export function AllEmployees() {
     onAddEmployeePress,
     onFilterPress,
     onProfilePress,
+    onSalaryPress,
     onBackPress,
   } = useAllEmployeesController();
 
@@ -75,6 +76,7 @@ export function AllEmployees() {
                   key={employee.id}
                   employee={employee}
                   onProfilePress={onProfilePress}
+                  onSalaryPress={onSalaryPress}
                 />
               ))
             )}

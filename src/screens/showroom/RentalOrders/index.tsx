@@ -10,14 +10,14 @@ import {
 import Svg, {Defs, LinearGradient, Line, Path, Stop, Text as SvgText} from 'react-native-svg';
 import {
   CreateInvoiceModal,
+  DateRangeFilterModal,
   ExportPdfModal,
   Icon,
   MetricCard,
   Screen,
-  SectionHeader,
   SendRemindersModal,
 } from '../../../components';
-import type {MetricCardData} from '../../../components';
+import type {DateRangePreset, MetricCardData} from '../../../components';
 import {useThemedStyles, useThemeColors, colors} from '../../../theme';
 import type {
   HistoryCompletedRow,
@@ -58,6 +58,7 @@ const INVOICE_STATUS_STYLE: Record<
   {background: string; color: string}
 > = {
   Paid: {background: '#E8F8EF', color: '#1FA85A'},
+  Completed: {background: '#E8F8EF', color: '#1FA85A'},
   Pending: {background: '#FFF1DF', color: '#D97706'},
   Overdue: {background: '#FFE8EC', color: '#E11D48'},
   Draft: {background: '#EEF2F6', color: '#64748B'},
@@ -76,10 +77,18 @@ const TAB_HEADER: Record<
   invoices: {title: 'Rental Invoices', icon: 'documentFile'},
 };
 
+const DATE_RANGE_BUTTON_LABEL: Record<DateRangePreset, string> = {
+  all: 'Date range',
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+};
+
 function OrdersTable({
   searchQuery,
   showingLabel,
   orders,
+  dateRangePreset,
   setSearchQuery,
   onStatusFilterPress,
   onDateFilterPress,
@@ -88,6 +97,7 @@ function OrdersTable({
   searchQuery: string;
   showingLabel: string;
   orders: RentalOrderRow[];
+  dateRangePreset: DateRangePreset;
   setSearchQuery: (query: string) => void;
   onStatusFilterPress: () => void;
   onDateFilterPress: () => void;
@@ -95,18 +105,26 @@ function OrdersTable({
 }) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
+  const {width: windowWidth} = useWindowDimensions();
+  const tableMinWidth = Math.max(windowWidth - 76, 380);
 
   return (
-    <View style={styles.card}>
-      <View style={styles.search}>
-        <Icon name="search" size={15} color="#8A94A6" />
-        <TextInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search orders, customers, VINs..."
-          placeholderTextColor="#8A94A6"
-          style={styles.searchInput}
-        />
+    <View style={styles.ledgerCard}>
+      <View style={styles.ledgerHeaderRow}>
+        <View style={styles.ledgerTitleBlock}>
+          <Text style={styles.ledgerEyebrow}>ORDERS</Text>
+          <Text style={styles.ledgerTitle}>Rental Orders</Text>
+        </View>
+        <View style={styles.ledgerSearch}>
+          <Icon name="search" size={13} color="#8A94A6" />
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search orders..."
+            placeholderTextColor="#8A94A6"
+            style={styles.ledgerSearchInput}
+          />
+        </View>
       </View>
 
       <View style={styles.filterRow}>
@@ -116,80 +134,112 @@ function OrdersTable({
             <Icon name="filter" size={11} color={colors.textDark} />
             <Text style={styles.filterBtnText}>Status</Text>
           </Pressable>
-          <Pressable style={styles.filterBtn} onPress={onDateFilterPress}>
+          <Pressable
+            style={[
+              styles.filterBtn,
+              dateRangePreset !== 'all' && styles.filterBtnActive,
+            ]}
+            onPress={onDateFilterPress}>
             <Icon name="filter" size={11} color={colors.textDark} />
-            <Text style={styles.filterBtnText}>Date range</Text>
+            <Text style={styles.filterBtnText}>
+              {DATE_RANGE_BUTTON_LABEL[dateRangePreset]}
+            </Text>
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.table}>
-        <View style={styles.tableHeader}>
-          <View style={styles.colOrder}>
-            <Text style={styles.headerText}>Order</Text>
-          </View>
-          <View style={styles.colCustomer}>
-            <Text style={styles.headerText}>Customer</Text>
-          </View>
-          <View style={styles.colAmount}>
-            <Text style={styles.headerText}>Amount</Text>
-          </View>
-          <View style={styles.colPayment}>
-            <Text style={styles.headerText}>Payment</Text>
-          </View>
-          <View style={styles.colStatus}>
-            <Text style={styles.headerText}>Status</Text>
-          </View>
-        </View>
-
-        {orders.map((order, index) => {
-          const paymentStyle = PAYMENT_STYLE[order.payment];
-          const statusStyle = STATUS_STYLE[order.status];
-          const isLast = index === orders.length - 1;
-          return (
-            <View
-              key={order.id}
-              style={[styles.tableRow, isLast && styles.tableRowLast]}>
-              <View style={styles.colOrder}>
-                <Pressable onPress={() => onOrderPress(order.orderId)}>
-                  <Text style={styles.orderId}>{order.orderId}</Text>
-                </Pressable>
-              </View>
-              <View style={styles.colCustomer}>
-                <Text style={styles.customer} numberOfLines={1}>
-                  {order.customer}
-                </Text>
-              </View>
-              <View style={styles.colAmount}>
-                <Text style={styles.amount}>{order.amount}</Text>
-              </View>
-              <View style={styles.colPayment}>
-                <View
-                  style={[
-                    styles.badge,
-                    {backgroundColor: paymentStyle.background},
-                  ]}>
-                  <Text
-                    style={[styles.badgeText, {color: paymentStyle.color}]}>
-                    {order.payment}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.colStatus}>
-                <View
-                  style={[
-                    styles.badge,
-                    {backgroundColor: statusStyle.background},
-                  ]}>
-                  <Text style={[styles.badgeText, {color: statusStyle.color}]}>
-                    {order.status}
-                  </Text>
-                </View>
-              </View>
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.invoiceTableScroll,
+          {minWidth: tableMinWidth},
+        ]}>
+        <View style={[styles.invoiceTable, {minWidth: tableMinWidth}]}>
+          <View style={styles.invoiceTableHeader}>
+            <View style={styles.invColInvoice}>
+              <Text style={styles.invHeaderText}>Order</Text>
             </View>
-          );
-        })}
-      </View>
+            <View style={styles.invColCustomer}>
+              <Text style={styles.invHeaderText}>Customer</Text>
+            </View>
+            <View style={styles.invColAmount}>
+              <Text style={styles.invHeaderText}>Amount</Text>
+            </View>
+            <View style={styles.orderColPayment}>
+              <Text style={styles.invHeaderText}>Payment</Text>
+            </View>
+            <View style={styles.orderColStatus}>
+              <Text style={styles.invHeaderText}>Status</Text>
+            </View>
+          </View>
+
+          {orders.map((order, index) => {
+            const paymentStyle = PAYMENT_STYLE[order.payment];
+            const statusStyle = STATUS_STYLE[order.status];
+            const isLast = index === orders.length - 1;
+            return (
+              <View
+                key={order.id}
+                style={[
+                  styles.invoiceTableRow,
+                  isLast && styles.invoiceTableRowLast,
+                ]}>
+                <View style={styles.invColInvoice}>
+                  <Pressable onPress={() => onOrderPress(order.orderId)}>
+                    <Text style={styles.invoiceIdLink} numberOfLines={1}>
+                      {order.orderId}
+                    </Text>
+                  </Pressable>
+                </View>
+                <View style={styles.invColCustomer}>
+                  <Text style={styles.invCustomerName} numberOfLines={1}>
+                    {order.customer}
+                  </Text>
+                </View>
+                <View style={styles.invColAmount}>
+                  <Text style={styles.invAmountText} numberOfLines={1}>
+                    {order.amount}
+                  </Text>
+                </View>
+                <View style={styles.orderColPayment}>
+                  <View
+                    style={[
+                      styles.invStatusBadge,
+                      {backgroundColor: paymentStyle.background},
+                    ]}>
+                    <Text
+                      style={[
+                        styles.invStatusText,
+                        {color: paymentStyle.color},
+                      ]}
+                      numberOfLines={1}>
+                      {order.payment}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.orderColStatus}>
+                  <View
+                    style={[
+                      styles.invStatusBadge,
+                      {backgroundColor: statusStyle.background},
+                    ]}>
+                    <Text
+                      style={[
+                        styles.invStatusText,
+                        {color: statusStyle.color},
+                      ]}
+                      numberOfLines={1}>
+                      {order.status}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -502,7 +552,10 @@ function InvoicesContent({
   onInvoicePress: (invoiceId: string) => void;
   onViewInvoicePress: (invoiceId: string) => void;
 }) {
+  const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
+  const {width: windowWidth} = useWindowDimensions();
+  const tableMinWidth = Math.max(windowWidth - 76, 340);
 
   return (
     <>
@@ -513,85 +566,112 @@ function InvoicesContent({
       </View>
 
       <View style={styles.ledgerCard}>
-        <SectionHeader eyebrow="Ledger" title="All Invoices" />
-
-        <View style={styles.search}>
-          <Icon name="search" size={15} color="#8A94A6" />
-          <TextInput
-            value={invoiceSearchQuery}
-            onChangeText={setInvoiceSearchQuery}
-            placeholder="Search invoices..."
-            placeholderTextColor="#8A94A6"
-            style={styles.searchInput}
-          />
+        <View style={styles.ledgerHeaderRow}>
+          <View style={styles.ledgerTitleBlock}>
+            <Text style={styles.ledgerEyebrow}>LEDGER</Text>
+            <Text style={styles.ledgerTitle}>All Invoices</Text>
+          </View>
+          <View style={styles.ledgerSearch}>
+            <Icon name="search" size={13} color="#8A94A6" />
+            <TextInput
+              value={invoiceSearchQuery}
+              onChangeText={setInvoiceSearchQuery}
+              placeholder="Search invoices..."
+              placeholderTextColor="#8A94A6"
+              style={styles.ledgerSearchInput}
+            />
+          </View>
         </View>
 
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <View style={styles.colInvoice}>
-              <Text style={styles.headerText}>Invoice</Text>
+        <ScrollView
+          horizontal
+          nestedScrollEnabled
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.invoiceTableScroll,
+            {minWidth: tableMinWidth},
+          ]}>
+          <View style={[styles.invoiceTable, {minWidth: tableMinWidth}]}>
+            <View style={styles.invoiceTableHeader}>
+              <View style={styles.invColInvoice}>
+                <Text style={styles.invHeaderText}>Invoice</Text>
+              </View>
+              <View style={styles.invColCustomer}>
+                <Text style={styles.invHeaderText}>Customer</Text>
+              </View>
+              <View style={styles.invColAmount}>
+                <Text style={styles.invHeaderText}>Amount</Text>
+              </View>
+              <View style={styles.invColDue}>
+                <Text style={styles.invHeaderText}>Due</Text>
+              </View>
+              <View style={styles.invColStatus}>
+                <Text style={styles.invHeaderText}>Status</Text>
+              </View>
+              <View style={styles.invColView} />
             </View>
-            <View style={styles.colInvCustomer}>
-              <Text style={styles.headerText}>Customer</Text>
-            </View>
-            <View style={styles.colInvAmount}>
-              <Text style={styles.headerText}>Amount</Text>
-            </View>
-            <View style={styles.colDue}>
-              <Text style={styles.headerText}>Due</Text>
-            </View>
-            <View style={styles.colInvStatus}>
-              <Text style={styles.headerText}>Status</Text>
-            </View>
-            <View style={styles.colView} />
-          </View>
 
-          {invoices.map((invoice, index) => {
-            const statusStyle = INVOICE_STATUS_STYLE[invoice.status];
-            const isLast = index === invoices.length - 1;
-            return (
-              <View
-                key={invoice.id}
-                style={[styles.tableRow, isLast && styles.tableRowLast]}>
-                <View style={styles.colInvoice}>
-                  <Pressable onPress={() => onInvoicePress(invoice.invoiceId)}>
-                    <Text style={styles.orderId}>{invoice.invoiceId}</Text>
-                  </Pressable>
-                </View>
-                <View style={styles.colInvCustomer}>
-                  <Text style={styles.customer} numberOfLines={1}>
-                    {invoice.customer}
-                  </Text>
-                </View>
-                <View style={styles.colInvAmount}>
-                  <Text style={styles.amount}>{invoice.amount}</Text>
-                </View>
-                <View style={styles.colDue}>
-                  <Text style={styles.dueText}>{invoice.due}</Text>
-                </View>
-                <View style={styles.colInvStatus}>
-                  <View
-                    style={[
-                      styles.badge,
-                      {backgroundColor: statusStyle.background},
-                    ]}>
-                    <Text
-                      style={[styles.badgeText, {color: statusStyle.color}]}>
-                      {invoice.status}
+            {invoices.map((invoice, index) => {
+              const statusStyle = INVOICE_STATUS_STYLE[invoice.status];
+              const isLast = index === invoices.length - 1;
+              return (
+                <View
+                  key={invoice.id}
+                  style={[
+                    styles.invoiceTableRow,
+                    isLast && styles.invoiceTableRowLast,
+                  ]}>
+                  <View style={styles.invColInvoice}>
+                    <Pressable onPress={() => onInvoicePress(invoice.invoiceId)}>
+                      <Text style={styles.invoiceIdLink} numberOfLines={1}>
+                        {invoice.invoiceId}
+                      </Text>
+                    </Pressable>
+                  </View>
+                  <View style={styles.invColCustomer}>
+                    <Text style={styles.invCustomerName} numberOfLines={1}>
+                      {invoice.customer}
                     </Text>
                   </View>
+                  <View style={styles.invColAmount}>
+                    <Text style={styles.invAmountText} numberOfLines={1}>
+                      {invoice.amount}
+                    </Text>
+                  </View>
+                  <View style={styles.invColDue}>
+                    <Text style={styles.invDueText} numberOfLines={1}>
+                      {invoice.due}
+                    </Text>
+                  </View>
+                  <View style={styles.invColStatus}>
+                    <View
+                      style={[
+                        styles.invStatusBadge,
+                        {backgroundColor: statusStyle.background},
+                      ]}>
+                      <Text
+                        style={[
+                          styles.invStatusText,
+                          {color: statusStyle.color},
+                        ]}
+                        numberOfLines={1}>
+                        {invoice.status}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.invColView}>
+                    <Pressable
+                      style={styles.invViewBtn}
+                      onPress={() => onViewInvoicePress(invoice.invoiceId)}
+                      hitSlop={6}>
+                      <Icon name="roleEye" size={14} color={colors.textSoft} />
+                    </Pressable>
+                  </View>
                 </View>
-                <View style={styles.colView}>
-                  <Pressable
-                    style={styles.viewBtn}
-                    onPress={() => onViewInvoicePress(invoice.invoiceId)}>
-                    <Icon name="roleEye" size={14} color="#8A94A6" />
-                  </Pressable>
-                </View>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
+        </ScrollView>
       </View>
     </>
   );
@@ -636,7 +716,11 @@ export function RentalOrders() {
     onCloseSendRemindersModal,
     onConfirmSendReminders,
     onStatusFilterPress,
+    dateRangePreset,
+    isDateRangeModalVisible,
     onDateFilterPress,
+    onCloseDateRangeModal,
+    onSelectDateRange,
     onOrderPress,
     onInvoicePress,
     onViewInvoicePress,
@@ -755,6 +839,7 @@ export function RentalOrders() {
               searchQuery={searchQuery}
               showingLabel={showingLabel}
               orders={orders}
+              dateRangePreset={dateRangePreset}
               setSearchQuery={setSearchQuery}
               onStatusFilterPress={onStatusFilterPress}
               onDateFilterPress={onDateFilterPress}
@@ -806,6 +891,12 @@ export function RentalOrders() {
         visible={isExportPdfModalVisible}
         onClose={onCloseExportPdfModal}
         onConfirm={onConfirmExportPdf}
+      />
+      <DateRangeFilterModal
+        visible={isDateRangeModalVisible}
+        selected={dateRangePreset}
+        onClose={onCloseDateRangeModal}
+        onSelect={onSelectDateRange}
       />
     </Screen>
   );

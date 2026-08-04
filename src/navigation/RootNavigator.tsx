@@ -7,10 +7,22 @@ import {Home} from '../screens/showroom/Home';
 import {Login} from '../screens/Login';
 import {SignUp} from '../screens/SignUp';
 import {CustomerHome} from '../screens/customer/CustomerHome';
-import {CustomerVehicles} from '../screens/customer/CustomerVehicles';
+import {CustomerEditProfile} from '../screens/customer/CustomerEditProfile';
+import {CustomerSettings} from '../screens/customer/CustomerSettings';
+import {CustomerSaved} from '../screens/customer/CustomerSaved';
+import {CustomerLiked} from '../screens/customer/CustomerLiked';
+import {CustomerShared} from '../screens/customer/CustomerShared';
+import {CustomerMessages} from '../screens/customer/CustomerMessages';
+import {CustomerConversation} from '../screens/customer/CustomerMessages/Conversation';
+import {CustomerNotifications} from '../screens/customer/CustomerNotifications';
 import {CustomerShowrooms} from '../screens/customer/CustomerShowrooms';
-import {CustomerChat} from '../screens/customer/CustomerChat';
+import {CustomerShowroomDetail} from '../screens/customer/CustomerShowrooms/ShowroomDetail';
+import {CustomerProductDetail} from '../screens/customer/CustomerShowrooms/ProductDetail';
+import {CustomerMechanics} from '../screens/customer/CustomerMechanics';
+import {CustomerAuction} from '../screens/customer/CustomerAuction';
+import {CustomerPlaceBid} from '../screens/customer/CustomerAuction/PlaceBid';
 import {CustomerJobs} from '../screens/customer/CustomerJobs';
+import {CustomerApplyJob} from '../screens/customer/CustomerJobs/ApplyJob';
 import {CustomerJobDetail} from '../screens/customer/CustomerJobs/JobDetail';
 import {Rentals} from '../screens/showroom/Rentals';
 import {AllVehicles} from '../screens/showroom/AllVehicles';
@@ -60,7 +72,10 @@ import {useAppSelector} from '../store/hooks';
 import {useThemeColors} from '../theme';
 import {isCustomerRole} from '../utils/authRole';
 import type {
+  CustomerAuctionStackParamList,
+  CustomerHomeStackParamList,
   CustomerJobsStackParamList,
+  CustomerShowroomsStackParamList,
   CustomerTabParamList,
   HomeStackParamList,
   RentalsStackParamList,
@@ -79,8 +94,91 @@ const StaffStack = createNativeStackNavigator<StaffStackParamList>();
 const RentalsStack = createNativeStackNavigator<RentalsStackParamList>();
 const VehiclesStack = createNativeStackNavigator<VehiclesStackParamList>();
 const CustomerTab = createBottomTabNavigator<CustomerTabParamList>();
+const CustomerHomeStack =
+  createNativeStackNavigator<CustomerHomeStackParamList>();
+const CustomerShowroomsStack =
+  createNativeStackNavigator<CustomerShowroomsStackParamList>();
+const CustomerAuctionStack =
+  createNativeStackNavigator<CustomerAuctionStackParamList>();
 const CustomerJobsStack =
   createNativeStackNavigator<CustomerJobsStackParamList>();
+
+function CustomerHomeNavigator() {
+  return (
+    <CustomerHomeStack.Navigator screenOptions={{headerShown: false}}>
+      <CustomerHomeStack.Screen
+        name="CustomerHomeMain"
+        component={CustomerHome}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerEditProfile"
+        component={CustomerEditProfile}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerSettings"
+        component={CustomerSettings}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerSaved"
+        component={CustomerSaved}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerLiked"
+        component={CustomerLiked}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerShared"
+        component={CustomerShared}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerMessages"
+        component={CustomerMessages}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerConversation"
+        component={CustomerConversation}
+      />
+      <CustomerHomeStack.Screen
+        name="CustomerNotifications"
+        component={CustomerNotifications}
+      />
+    </CustomerHomeStack.Navigator>
+  );
+}
+
+function CustomerShowroomsNavigator() {
+  return (
+    <CustomerShowroomsStack.Navigator screenOptions={{headerShown: false}}>
+      <CustomerShowroomsStack.Screen
+        name="CustomerShowroomsList"
+        component={CustomerShowrooms}
+      />
+      <CustomerShowroomsStack.Screen
+        name="CustomerShowroomDetail"
+        component={CustomerShowroomDetail}
+      />
+      <CustomerShowroomsStack.Screen
+        name="CustomerProductDetail"
+        component={CustomerProductDetail}
+      />
+    </CustomerShowroomsStack.Navigator>
+  );
+}
+
+function CustomerAuctionNavigator() {
+  return (
+    <CustomerAuctionStack.Navigator screenOptions={{headerShown: false}}>
+      <CustomerAuctionStack.Screen
+        name="CustomerAuctionList"
+        component={CustomerAuction}
+      />
+      <CustomerAuctionStack.Screen
+        name="CustomerPlaceBid"
+        component={CustomerPlaceBid}
+      />
+    </CustomerAuctionStack.Navigator>
+  );
+}
 
 function CustomerJobsNavigator() {
   return (
@@ -88,6 +186,10 @@ function CustomerJobsNavigator() {
       <CustomerJobsStack.Screen
         name="CustomerJobsList"
         component={CustomerJobs}
+      />
+      <CustomerJobsStack.Screen
+        name="CustomerApplyJob"
+        component={CustomerApplyJob}
       />
       <CustomerJobsStack.Screen
         name="CustomerJobDetail"
@@ -208,16 +310,22 @@ function CustomerTabs() {
     <CustomerTab.Navigator
       tabBar={props => <CustomerTabBar {...props} />}
       screenOptions={{headerShown: false, tabBarHideOnKeyboard: true}}>
-      <CustomerTab.Screen name="CustomerHomeTab" component={CustomerHome} />
       <CustomerTab.Screen
-        name="CustomerVehiclesTab"
-        component={CustomerVehicles}
+        name="CustomerHomeTab"
+        component={CustomerHomeNavigator}
       />
       <CustomerTab.Screen
         name="CustomerShowroomsTab"
-        component={CustomerShowrooms}
+        component={CustomerShowroomsNavigator}
       />
-      <CustomerTab.Screen name="CustomerChatTab" component={CustomerChat} />
+      <CustomerTab.Screen
+        name="CustomerMechanicsTab"
+        component={CustomerMechanics}
+      />
+      <CustomerTab.Screen
+        name="CustomerAuctionTab"
+        component={CustomerAuctionNavigator}
+      />
       <CustomerTab.Screen
         name="CustomerJobsTab"
         component={CustomerJobsNavigator}

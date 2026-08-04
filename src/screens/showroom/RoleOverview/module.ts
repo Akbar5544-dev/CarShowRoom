@@ -47,7 +47,6 @@ export type RoleOverviewData = {
 export type RoleOverviewController = {
   role: RoleOverviewData | null;
   onBackPress: () => void;
-  onDuplicatePress: () => void;
   onDeletePress: () => void;
   onEditPress: () => void;
   onAssignUserPress: () => void;

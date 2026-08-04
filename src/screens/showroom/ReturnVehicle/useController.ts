@@ -15,7 +15,7 @@ import {
   toIsoDate,
   unwrapData,
 } from '../../../utils/apiHelpers';
-import {appendMediaToFormData, pickFromGallery, type PickedMedia} from '../../../utils/mediaPicker';
+import {appendMediaToFormData, pickMultipleFromGallery, type PickedMedia} from '../../../utils/mediaPicker';
 import type {
   ExtraCharge,
   InspectionStat,
@@ -248,12 +248,12 @@ export function useReturnVehicleController(): ReturnVehicleController {
   }, []);
 
   const onInspectionPhotoPress = useCallback(async () => {
-    const media = await pickFromGallery();
-    if (!media) {
+    const picked = await pickMultipleFromGallery();
+    if (!picked.length) {
       return;
     }
     setInspectionPhotos(prev => {
-      const next = [...prev, media];
+      const next = [...prev, ...picked];
       setInspectionStats(stats =>
         stats.map(stat =>
           stat.id === 'photos'
@@ -270,7 +270,10 @@ export function useReturnVehicleController(): ReturnVehicleController {
       );
       return next;
     });
-    showMessage({message: 'Inspection photo added', type: 'success'});
+    showMessage({
+      message: `${picked.length} inspection photo${picked.length === 1 ? '' : 's'} added`,
+      type: 'success',
+    });
   }, []);
 
   const onSaveInspection = useCallback(() => {

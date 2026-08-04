@@ -1,40 +1,27 @@
 import React from 'react';
 import {Pressable, ScrollView, Text, View} from 'react-native';
 import {Icon, Screen} from '../../../components';
-import {useThemedStyles, useThemeColors, colors} from '../../../theme';
+import {useThemedStyles, useThemeColors} from '../../../theme';
 import type {ManageRoleItem} from './module';
 import {createStyles} from './styles';
 import {useManageRolesController} from './useController';
 
 function ManageRoleCard({
   role,
-  onMorePress,
   onManagePress,
 }: {
   role: ManageRoleItem;
-  onMorePress: (roleId: string) => void;
   onManagePress: (roleId: string) => void;
 }) {
-  const colors = useThemeColors();
+  const themeColors = useThemeColors();
   const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.roleCard}>
       <View style={styles.roleTop}>
         <View style={[styles.roleIcon, {backgroundColor: role.iconBg}]}>
-          <Icon name={role.icon} size={18} color={colors.white} />
+          <Icon name={role.icon} size={18} color={themeColors.white} />
         </View>
-        <Pressable
-          style={styles.roleMenuBtn}
-          onPress={() => onMorePress(role.id)}
-          hitSlop={8}
-          accessibilityLabel={`${role.title} options`}>
-          <Icon
-            name="moreDotsVertical"
-            size={14}
-            color={colors.textSecondary}
-          />
-        </Pressable>
       </View>
 
       <View style={styles.roleBody}>
@@ -62,7 +49,6 @@ export function ManageRoles() {
     roles,
     onBackPress,
     onCreateRolePress,
-    onRoleMorePress,
     onManageRolePress,
   } = useManageRolesController();
 
@@ -111,7 +97,6 @@ export function ManageRoles() {
                 <ManageRoleCard
                   key={role.id}
                   role={role}
-                  onMorePress={onRoleMorePress}
                   onManagePress={onManageRolePress}
                 />
               ))

@@ -47,6 +47,7 @@ const DEFAULT_ACTIVITIES: ActivityItem[] = [
     time: '2h ago',
     icon: 'activityCheck',
     tone: 'green',
+    actionTab: 'rental-history',
   },
   {
     id: '2',
@@ -54,6 +55,7 @@ const DEFAULT_ACTIVITIES: ActivityItem[] = [
     time: '5d ago',
     icon: 'activityWrench',
     tone: 'amber',
+    actionTab: 'maintenance',
   },
 ];
 
@@ -73,6 +75,7 @@ function mapMaintenanceRow(item: unknown, index: number): MaintenanceRow {
 
 function mapRentalRow(item: unknown, index: number): RentalRow {
   const row = asRecord(item);
+  const customer = asRecord(row.customer);
   const start = pickString(row, ['start_date', 'pickup_date']);
   const end = pickString(row, [
     'expected_return_date',
@@ -88,6 +91,11 @@ function mapRentalRow(item: unknown, index: number): RentalRow {
 
   return {
     id: String(row.id ?? index),
+    customer: pickString(
+      customer,
+      ['name', 'full_name', 'customer_name'],
+      pickString(row, ['customer_name'], 'Customer'),
+    ),
     start: formatApiDate(start),
     end: formatApiDate(end),
     days,
@@ -219,21 +227,50 @@ export function useVehicleDetailApi(
           );
         }, 0);
 
-        const rentalActivities: ActivityItem[] = rentalsSource
-          .slice(0, 2)
-          .map((item, index) => {
-            const row = asRecord(item);
-            const customer = asRecord(row.customer);
-            return {
-              id: `rental-${row.id ?? index}`,
-              title: `Rental by ${pickString(customer, ['name'], 'Customer')} · ${formatMoney(pickNumber(row, ['total_amount', 'daily_rate']))}`,
+        const rentalActivities: ActivityItem[] = (() => {
+          if (!rentalsSource.length) {
+            return [];
+          }
+          const latest = asRecord(rentalsSource[0]);
+          const customer = asRecord(latest.customer);
+          const latestName = pickString(
+            customer,
+            ['name', 'full_name'],
+            pickString(latest, ['customer_name'], 'Customer'),
+          );
+          const count = rentalsSource.length;
+          return [
+            {
+              id: `rental-summary-${vehicleId}`,
+              title:
+                count === 1
+                  ? `Rental by ${latestName} · ${formatMoney(pickNumber(latest, ['total_amount', 'daily_rate']))}`
+                  : `${count} rentals · Latest by ${latestName}`,
               time: formatApiDate(
-                pickString(row, ['start_date', 'created_at']),
+                pickString(latest, ['start_date', 'created_at']),
               ),
               icon: 'activityDollar' as const,
               tone: 'blue' as const,
-            };
-          });
+              actionTab: 'rental-history' as const,
+            },
+          ];
+        })();
+
+        const maintenanceActivity: ActivityItem[] =
+          maintenance.length > 0
+            ? [
+                {
+                  id: `maintenance-summary-${vehicleId}`,
+                  title: `${maintenance.length} maintenance record${
+                    maintenance.length === 1 ? '' : 's'
+                  } · Latest: ${maintenance[0].type}`,
+                  time: maintenance[0].date,
+                  icon: 'activityWrench' as const,
+                  tone: 'amber' as const,
+                  actionTab: 'maintenance' as const,
+                },
+              ]
+            : [];
 
         setState({
           description: pickString(
@@ -297,9 +334,10 @@ export function useVehicleDetailApi(
           rentalRows: rentals,
           maintenanceRows: maintenance,
           documents: docs,
-          activities: rentalActivities.length
-            ? rentalActivities
-            : DEFAULT_ACTIVITIES,
+          activities:
+            rentalActivities.length || maintenanceActivity.length
+              ? [...rentalActivities, ...maintenanceActivity]
+              : DEFAULT_ACTIVITIES,
           totalRentals: String(rentals.length),
           totalRevenue: formatMoney(totalRevenue),
           servicesDone: String(maintenance.length),

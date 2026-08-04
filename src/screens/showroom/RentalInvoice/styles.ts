@@ -101,6 +101,21 @@ export const createStyles = (colors: AppColors) =>
       color: colors.error,
     },
 
+    invoiceRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      flexShrink: 1,
+    },
+
+    amountInline: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.actionBlue,
+      textAlign: 'right',
+      maxWidth: 120,
+    },
+
     datesRow: {
       flexDirection: 'row',
       gap: 16,
@@ -292,21 +307,26 @@ export const createStyles = (colors: AppColors) =>
     },
     markPaidBtn: {
       borderRadius: 12,
-      backgroundColor: colors.actionTint12,
-      paddingHorizontal: 10,
-      paddingVertical: 7,
+      backgroundColor: colors.actionBlue,
+      height: 34,
+      paddingHorizontal: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     markPaidText: {
       fontSize: 10,
       fontWeight: '700',
-      color: colors.actionBlue,
+      color: colors.white,
     },
 
     footerActions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: 10,
       paddingTop: 2,
     },
     downloadBtn: {
+      flex: 1,
       height: 44,
       borderRadius: 22,
       backgroundColor: colors.actionBlue,
@@ -321,6 +341,7 @@ export const createStyles = (colors: AppColors) =>
       color: colors.white,
     },
     emailBtn: {
+      flex: 1,
       height: 44,
       borderRadius: 22,
       backgroundColor: colors.surface,

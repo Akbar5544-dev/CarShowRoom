@@ -98,15 +98,18 @@ export function RentalInvoice() {
                 <Text style={styles.invoiceEyebrow}>Invoice</Text>
                 <Text style={styles.invoiceId}>{invoiceId}</Text>
               </View>
-              <View style={[styles.statusPill, statusPillStyle]}>
-                <Icon
-                  name={statusTone === 'paid' ? 'activityCheck' : 'shiftClock'}
-                  size={11}
-                  color={statusIconColor}
-                />
-                <Text style={[styles.statusText, statusTextStyle]}>
-                  {status}
-                </Text>
+              <View style={styles.invoiceRight}>
+                <View style={[styles.statusPill, statusPillStyle]}>
+                  <Icon
+                    name={statusTone === 'paid' ? 'activityCheck' : 'shiftClock'}
+                    size={11}
+                    color={statusIconColor}
+                  />
+                  <Text style={[styles.statusText, statusTextStyle]}>
+                    {status}
+                  </Text>
+                </View>
+                <Text style={styles.amountInline}>{totalDue}</Text>
               </View>
             </View>
 

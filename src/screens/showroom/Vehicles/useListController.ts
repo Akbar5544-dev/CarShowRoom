@@ -1,6 +1,7 @@
 import {useCallback, useMemo, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {showMessage} from 'react-native-flash-message';
 import type {VehicleInventoryItem} from '../../../components/VehicleInventoryCard';
 import {useSmartFocusFetch} from '../../../hooks/useSmartFocusFetch';
 import type {VehiclesStackParamList} from '../../../navigation/types';
@@ -90,6 +91,20 @@ export function useVehicleListController(): VehicleListController {
     [navigation],
   );
 
+  const onPostVehiclePress = useCallback((item: VehicleInventoryItem) => {
+    showMessage({
+      message: `Post listing for ${item.make} ${item.model} coming soon`,
+      type: 'info',
+    });
+  }, []);
+
+  const onAuctionVehiclePress = useCallback((item: VehicleInventoryItem) => {
+    showMessage({
+      message: `Auction for ${item.make} ${item.model} coming soon`,
+      type: 'info',
+    });
+  }, []);
+
   const onItemPress = useCallback(
     (item: VehicleInventoryItem) => {
       navigation.navigate('RentalVehicle', {
@@ -122,6 +137,8 @@ export function useVehicleListController(): VehicleListController {
     onAuctionPress,
     onAddVehiclePress,
     onViewVehiclePress,
+    onPostVehiclePress,
+    onAuctionVehiclePress,
     onItemPress,
   };
 }

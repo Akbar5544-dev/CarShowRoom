@@ -1,0 +1,84 @@
+{
+  "name": "Carshowroom - Customer Side APIs",
+  "prefix": "/api/public",
+  "auth_note": "Authenticated customer routes require Bearer token (auth:sanctum) and middleware public.user.",
+  "endpoints": [
+    { "method": "GET", "path": "/feed", "auth_required": false, "controller": "PublicFeedController", "action": "index" },
+    { "method": "GET", "path": "/feed/{vehicle}/comments", "auth_required": false, "controller": "PublicFeedController", "action": "comments" },
+
+    { "method": "GET", "path": "/showrooms", "auth_required": false, "controller": "PublicShowroomController", "action": "index" },
+    { "method": "GET", "path": "/showrooms/{slug}", "auth_required": false, "controller": "PublicShowroomController", "action": "show" },
+    { "method": "GET", "path": "/showrooms/{showroom}/ratings", "auth_required": false, "controller": "PublicShowroomRatingController", "action": "index" },
+
+    { "method": "GET", "path": "/vehicles/filters", "auth_required": false, "controller": "PublicVehicleController", "action": "filters" },
+    { "method": "GET", "path": "/vehicles", "auth_required": false, "controller": "PublicVehicleController", "action": "index" },
+    { "method": "GET", "path": "/vehicles/{vehicle}", "auth_required": false, "controller": "PublicVehicleController", "action": "show" },
+    { "method": "POST", "path": "/vehicles/{vehicle}/test-drive-requests", "auth_required": false, "controller": "PublicTestDriveController", "action": "store" },
+
+    { "method": "GET", "path": "/mechanics/filters", "auth_required": false, "controller": "PublicMechanicController", "action": "filters" },
+    { "method": "GET", "path": "/mechanics", "auth_required": false, "controller": "PublicMechanicController", "action": "index" },
+    { "method": "GET", "path": "/mechanics/{idOrSlug}", "auth_required": false, "controller": "PublicMechanicController", "action": "show" },
+
+    { "method": "GET", "path": "/auctions", "auth_required": false, "controller": "PublicAuctionController", "action": "index" },
+    { "method": "GET", "path": "/auctions/{auction}", "auth_required": false, "controller": "PublicAuctionController", "action": "show" },
+    { "method": "GET", "path": "/auctions/{auction}/bids", "auth_required": false, "controller": "PublicAuctionController", "action": "bids" },
+
+    { "method": "GET", "path": "/jobs/filters", "auth_required": false, "controller": "PublicJobController", "action": "filters" },
+    { "method": "GET", "path": "/jobs", "auth_required": false, "controller": "PublicJobController", "action": "index" },
+    { "method": "GET", "path": "/jobs/{idOrSlug}", "auth_required": false, "controller": "PublicJobController", "action": "show" },
+    { "method": "POST", "path": "/jobs/{idOrSlug}/apply", "auth_required": false, "controller": "PublicJobController", "action": "apply" },
+
+    { "method": "POST", "path": "/enquiries", "auth_required": false, "controller": "PublicEnquiryController", "action": "store" },
+    { "method": "POST", "path": "/contact", "auth_required": false, "controller": "PublicContactController", "action": "store" },
+    { "method": "POST", "path": "/listings/report", "auth_required": false, "controller": "PublicListingReportController", "action": "store" },
+
+    { "method": "POST", "path": "/register", "auth_required": false, "controller": "PublicAuthController", "action": "register" },
+    { "method": "POST", "path": "/login", "auth_required": false, "controller": "PublicAuthController", "action": "login" },
+    { "method": "POST", "path": "/google", "auth_required": false, "controller": "PublicAuthController", "action": "google" },
+    { "method": "POST", "path": "/forgot-password", "auth_required": false, "controller": "PublicAuthController", "action": "forgotPassword" },
+    { "method": "POST", "path": "/verify-reset-code", "auth_required": false, "controller": "PublicAuthController", "action": "verifyResetCode" },
+    { "method": "POST", "path": "/reset-password", "auth_required": false, "controller": "PublicAuthController", "action": "resetPassword" },
+
+    { "method": "GET", "path": "/me", "auth_required": true, "controller": "PublicAuthController", "action": "me" },
+    { "method": "POST", "path": "/logout", "auth_required": true, "controller": "PublicAuthController", "action": "logout" },
+    { "method": "PUT", "path": "/profile", "auth_required": true, "controller": "PublicAuthController", "action": "updateProfile" },
+    { "method": "POST", "path": "/profile/avatar", "auth_required": true, "controller": "PublicAuthController", "action": "updateAvatar" },
+    { "method": "POST", "path": "/profile/background", "auth_required": true, "controller": "PublicAuthController", "action": "updateBackground" },
+    { "method": "PUT", "path": "/settings", "auth_required": true, "controller": "PublicAuthController", "action": "updateSettings" },
+    { "method": "POST", "path": "/change-password", "auth_required": true, "controller": "PublicAuthController", "action": "changePassword" },
+
+    { "method": "POST", "path": "/feed/{vehicle}/like", "auth_required": true, "controller": "PublicFeedController", "action": "like" },
+    { "method": "DELETE", "path": "/feed/{vehicle}/like", "auth_required": true, "controller": "PublicFeedController", "action": "unlike" },
+    { "method": "POST", "path": "/feed/{vehicle}/share", "auth_required": true, "controller": "PublicFeedController", "action": "share" },
+    { "method": "POST", "path": "/feed/{vehicle}/comments", "auth_required": true, "controller": "PublicFeedController", "action": "storeComment" },
+    { "method": "DELETE", "path": "/feed/comments/{comment}", "auth_required": true, "controller": "PublicFeedController", "action": "destroyComment" },
+    { "method": "GET", "path": "/liked-vehicles", "auth_required": true, "controller": "PublicFeedController", "action": "liked" },
+    { "method": "GET", "path": "/shared-vehicles", "auth_required": true, "controller": "PublicFeedController", "action": "shared" },
+
+    { "method": "GET", "path": "/saved-vehicles", "auth_required": true, "controller": "PublicSavedVehicleController", "action": "index" },
+    { "method": "POST", "path": "/saved-vehicles", "auth_required": true, "controller": "PublicSavedVehicleController", "action": "store" },
+    { "method": "DELETE", "path": "/saved-vehicles/{vehicle}", "auth_required": true, "controller": "PublicSavedVehicleController", "action": "destroy" },
+
+    { "method": "GET", "path": "/messages/unread-count", "auth_required": true, "controller": "PublicChatController", "action": "unreadCount" },
+    { "method": "GET", "path": "/messages", "auth_required": true, "controller": "PublicChatController", "action": "index" },
+    { "method": "POST", "path": "/messages", "auth_required": true, "controller": "PublicChatController", "action": "store" },
+    { "method": "GET", "path": "/messages/{conversation}", "auth_required": true, "controller": "PublicChatController", "action": "show" },
+    { "method": "POST", "path": "/messages/{conversation}/send", "auth_required": true, "controller": "PublicChatController", "action": "sendMessage" },
+
+    { "method": "GET", "path": "/notifications/unread-count", "auth_required": true, "controller": "PublicNotificationController", "action": "unreadCount" },
+    { "method": "GET", "path": "/notifications", "auth_required": true, "controller": "PublicNotificationController", "action": "index" },
+    { "method": "POST", "path": "/notifications/read-all", "auth_required": true, "controller": "PublicNotificationController", "action": "markAllRead" },
+    { "method": "POST", "path": "/notifications/{notification}/read", "auth_required": true, "controller": "PublicNotificationController", "action": "markRead" },
+    { "method": "DELETE", "path": "/notifications/{notification}", "auth_required": true, "controller": "PublicNotificationController", "action": "destroy" },
+
+    { "method": "GET", "path": "/follows", "auth_required": true, "controller": "PublicFollowController", "action": "index" },
+    { "method": "POST", "path": "/follows", "auth_required": true, "controller": "PublicFollowController", "action": "store" },
+    { "method": "DELETE", "path": "/follows/{showroom}", "auth_required": true, "controller": "PublicFollowController", "action": "destroy" },
+    { "method": "POST", "path": "/showrooms/{showroom}/ratings", "auth_required": true, "controller": "PublicShowroomRatingController", "action": "store" },
+    { "method": "GET", "path": "/showrooms/{showroom}/ratings/me", "auth_required": true, "controller": "PublicShowroomRatingController", "action": "mine" },
+
+    { "method": "POST", "path": "/auctions/{auction}/watch", "auth_required": true, "controller": "PublicAuctionController", "action": "watch" },
+    { "method": "DELETE", "path": "/auctions/{auction}/watch", "auth_required": true, "controller": "PublicAuctionController", "action": "unwatch" },
+    { "method": "POST", "path": "/auctions/{auction}/bids", "auth_required": true, "controller": "PublicAuctionController", "action": "placeBid" }
+  ]
+}

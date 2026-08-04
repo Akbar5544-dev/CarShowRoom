@@ -15,7 +15,7 @@ export const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   main: {
     paddingHorizontal: 20,
-    gap: 12,
+    gap: 14,
   },
   pageHeader: {
     gap: 10,

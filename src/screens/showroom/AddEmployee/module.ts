@@ -1,13 +1,10 @@
 import {DocumentUploadItem} from '../../../components/DocumentUploadGrid';
-import {IconName} from '../../../assets/iconXml';
 
 export type AddEmployeeStepId = 0 | 1 | 2 | 3;
 
 export type AddEmployeeStep = {
   id: AddEmployeeStepId;
   label: string;
-  icon: IconName;
-  activeIcon?: IconName;
 };
 
 export type AddEmployeeForm = {
@@ -53,11 +50,11 @@ export type AddEmployeeControllerState = {
     key: K,
     value: AddEmployeeForm[K],
   ) => void;
+  fieldErrors: Partial<Record<keyof AddEmployeeForm, string>>;
   onNextPress: () => void;
   onPreviousPress: () => void;
   onBackPress: () => void;
-  onCancelPress: () => void;
-  onSaveDraftPress: () => void;
+  onStepPress: (stepId: number) => void;
   onUploadPhotoPress: () => void;
   onDocumentUploadPress: (item: DocumentUploadItem) => void;
 };

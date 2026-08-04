@@ -90,8 +90,6 @@ export function useManageRolesController(): ManageRolesController {
     navigation.navigate('CreateRole');
   }, [navigation]);
 
-  const onRoleMorePress = useCallback((_roleId: string) => {}, []);
-
   const onManageRolePress = useCallback(
     (roleId: string) => {
       navigation.navigate('RoleOverview', {roleId});
@@ -104,7 +102,6 @@ export function useManageRolesController(): ManageRolesController {
     roles,
     onBackPress,
     onCreateRolePress,
-    onRoleMorePress,
     onManageRolePress,
   };
 }

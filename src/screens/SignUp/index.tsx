@@ -1,7 +1,10 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   ActivityIndicator,
+  Image,
+  Modal,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -11,25 +14,60 @@ import {SvgXml} from 'react-native-svg';
 import {authIcons} from '../../assets/authIcons';
 import {Screen} from '../../components';
 import {useThemedStyles, useThemeColors} from '../../theme';
+import {COUNTRY_OPTIONS} from './module';
 import {createStyles} from './styles';
 import {useSignUpController} from './useController';
+
+function RequiredLabel({
+  label,
+  optional,
+  styles,
+}: {
+  label: string;
+  optional?: boolean;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <Text style={styles.label}>
+      {label}
+      {optional ? (
+        <Text style={styles.optional}> (optional)</Text>
+      ) : (
+        <Text style={styles.required}> *</Text>
+      )}
+    </Text>
+  );
+}
 
 export function SignUp() {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
+  const [picker, setPicker] = useState<'country' | 'city' | null>(null);
   const {
     role,
     roleOptions,
     fullName,
+    showroomName,
+    logo,
+    country,
+    city,
+    address,
     email,
     phone,
     password,
     passwordVisible,
     agreedToTerms,
+    cityOptions,
     errors,
     loading,
     setRole,
     setFullName,
+    setShowroomName,
+    onPickLogo,
+    onClearLogo,
+    setCountry,
+    setCity,
+    setAddress,
     setEmail,
     setPhone,
     setPassword,
@@ -37,9 +75,9 @@ export function SignUp() {
     onToggleTerms,
     onCreateAccount,
     onLoginPress,
-    onGooglePress,
-    onApplePress,
   } = useSignUpController();
+
+  const isAdmin = role === 'admin';
 
   return (
     <Screen style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
@@ -61,7 +99,9 @@ export function SignUp() {
 
         <Text style={styles.title}>Create your account</Text>
         <Text style={styles.subtitle}>
-          Free for buyers and renters. Showrooms get a 14-day trial.
+          {isAdmin
+            ? 'Register your showroom and start managing inventory.'
+            : 'Free for buyers and renters. Save cars and message dealers.'}
         </Text>
 
         <View style={styles.roleRow}>
@@ -79,26 +119,13 @@ export function SignUp() {
           })}
         </View>
 
-        <Pressable style={styles.socialBtn} onPress={onGooglePress}>
-          <Text style={styles.socialBtnText}>Continue with Google</Text>
-        </Pressable>
-        <Pressable style={styles.socialBtn} onPress={onApplePress}>
-          <Text style={styles.socialBtnText}>Continue with Apple</Text>
-        </Pressable>
-
-        <View style={styles.orRow}>
-          <View style={styles.orLine} />
-          <Text style={styles.orText}>OR</Text>
-          <View style={styles.orLine} />
-        </View>
-
         <View style={styles.form}>
           <View style={styles.field}>
-            <Text style={styles.label}>Full name</Text>
+            <RequiredLabel label="Full name" styles={styles} />
             <TextInput
               value={fullName}
               onChangeText={setFullName}
-              placeholder="----"
+              placeholder="Your full name"
               placeholderTextColor={colors.textSoft}
               autoCapitalize="words"
               style={[styles.input, errors.fullName ? styles.inputError : null]}
@@ -108,40 +135,195 @@ export function SignUp() {
             ) : null}
           </View>
 
+          {isAdmin ? (
+            <>
+              <View style={styles.field}>
+                <RequiredLabel label="Showroom name" styles={styles} />
+                <TextInput
+                  value={showroomName}
+                  onChangeText={setShowroomName}
+                  placeholder="City Motors"
+                  placeholderTextColor={colors.textSoft}
+                  style={[
+                    styles.input,
+                    errors.showroomName ? styles.inputError : null,
+                  ]}
+                />
+                {errors.showroomName ? (
+                  <Text style={styles.errorText}>{errors.showroomName}</Text>
+                ) : null}
+              </View>
+
+              <View style={styles.field}>
+                <RequiredLabel
+                  label="Showroom logo"
+                  optional
+                  styles={styles}
+                />
+                <Pressable style={styles.uploadBox} onPress={onPickLogo}>
+                  {logo ? (
+                    <View style={styles.logoPreviewRow}>
+                      <Image source={{uri: logo.uri}} style={styles.logoThumb} />
+                      <View style={{flex: 1}}>
+                        <Text style={styles.uploadTitle} numberOfLines={1}>
+                          {logo.name}
+                        </Text>
+                        <Pressable onPress={onClearLogo}>
+                          <Text style={styles.clearLogo}>Remove</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : (
+                    <>
+                      <Text style={styles.uploadTitle}>
+                        Tap to upload logo
+                      </Text>
+                      <Text style={styles.uploadHint}>
+                        PNG, JPG, WEBP · max 5MB
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+              </View>
+            </>
+          ) : null}
+
+          {!isAdmin ? (
+            <View style={styles.field}>
+              <RequiredLabel label="Email" styles={styles} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={colors.textSoft}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={[styles.input, errors.email ? styles.inputError : null]}
+              />
+              {errors.email ? (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          {!isAdmin ? (
+            <View style={styles.field}>
+              <RequiredLabel label="Phone" styles={styles} />
+              <View style={styles.phoneRow}>
+                <View style={styles.dialCode}>
+                  <Text style={styles.dialFlag}>🇵🇰</Text>
+                  <Text style={styles.dialText}>+92</Text>
+                </View>
+                <TextInput
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="3001234567"
+                  placeholderTextColor={colors.textSoft}
+                  keyboardType="phone-pad"
+                  style={[
+                    styles.input,
+                    styles.phoneInput,
+                    errors.phone ? styles.inputError : null,
+                  ]}
+                />
+              </View>
+              {errors.phone ? (
+                <Text style={styles.errorText}>{errors.phone}</Text>
+              ) : null}
+            </View>
+          ) : null}
+
           <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              placeholderTextColor={colors.textSoft}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={[styles.input, errors.email ? styles.inputError : null]}
-            />
-            {errors.email ? (
-              <Text style={styles.errorText}>{errors.email}</Text>
-            ) : null}
+            <RequiredLabel label="Country" optional styles={styles} />
+            <Pressable
+              style={styles.select}
+              onPress={() => setPicker('country')}>
+              <Text
+                style={country ? styles.selectValue : styles.selectPlaceholder}>
+                {country || 'Select country'}
+              </Text>
+              <Text style={styles.chev}>▾</Text>
+            </Pressable>
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Phone</Text>
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="+92 300 0000000"
-              placeholderTextColor={colors.textSoft}
-              keyboardType="phone-pad"
-              style={[styles.input, errors.phone ? styles.inputError : null]}
-            />
-            {errors.phone ? (
-              <Text style={styles.errorText}>{errors.phone}</Text>
-            ) : null}
+            <RequiredLabel label="City" optional styles={styles} />
+            <Pressable
+              style={[styles.select, !country && styles.selectDisabled]}
+              disabled={!country}
+              onPress={() => setPicker('city')}>
+              <Text
+                style={city ? styles.selectValue : styles.selectPlaceholder}>
+                {city || (country ? 'Select city' : 'Select country first')}
+              </Text>
+              <Text style={styles.chev}>▾</Text>
+            </Pressable>
           </View>
 
+          {isAdmin ? (
+            <View style={styles.field}>
+              <RequiredLabel label="Address" optional styles={styles} />
+              <TextInput
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Street, area"
+                placeholderTextColor={colors.textSoft}
+                multiline
+                textAlignVertical="top"
+                style={[styles.input, styles.textarea]}
+              />
+            </View>
+          ) : null}
+
+          {isAdmin ? (
+            <View style={styles.field}>
+              <RequiredLabel label="Email" styles={styles} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={colors.textSoft}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={[styles.input, errors.email ? styles.inputError : null]}
+              />
+              {errors.email ? (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          {isAdmin ? (
+            <View style={styles.field}>
+              <RequiredLabel label="Phone" styles={styles} />
+              <View style={styles.phoneRow}>
+                <View style={styles.dialCode}>
+                  <Text style={styles.dialFlag}>🇵🇰</Text>
+                  <Text style={styles.dialText}>+92</Text>
+                </View>
+                <TextInput
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="3001234567"
+                  placeholderTextColor={colors.textSoft}
+                  keyboardType="phone-pad"
+                  style={[
+                    styles.input,
+                    styles.phoneInput,
+                    errors.phone ? styles.inputError : null,
+                  ]}
+                />
+              </View>
+              {errors.phone ? (
+                <Text style={styles.errorText}>{errors.phone}</Text>
+              ) : null}
+            </View>
+          ) : null}
+
           <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
+            <RequiredLabel label="Password" styles={styles} />
             <View style={styles.passwordWrap}>
               <TextInput
                 value={password}
@@ -206,6 +388,39 @@ export function SignUp() {
           </Pressable>
         </View>
       </KeyboardAwareScrollView>
+
+      <Modal
+        visible={picker != null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPicker(null)}>
+        <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {picker === 'country' ? 'Select country' : 'Select city'}
+            </Text>
+            <ScrollView style={{maxHeight: 320}}>
+              {(picker === 'country' ? [...COUNTRY_OPTIONS] : cityOptions).map(
+                option => (
+                  <Pressable
+                    key={option}
+                    style={styles.modalItem}
+                    onPress={() => {
+                      if (picker === 'country') {
+                        setCountry(option);
+                      } else {
+                        setCity(option);
+                      }
+                      setPicker(null);
+                    }}>
+                    <Text style={styles.modalItemText}>{option}</Text>
+                  </Pressable>
+                ),
+              )}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }

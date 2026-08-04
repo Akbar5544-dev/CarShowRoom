@@ -15,17 +15,22 @@ import {useSmartFocusFetch} from '../../../hooks/useSmartFocusFetch';
 import {
   appendMediaToFormData,
   asRecord,
+  buildFieldErrors,
+  clearFieldError,
   createMediaFormData,
   formatCount,
   formatMoney,
   fuelTypeLabel,
+  hasFieldErrors,
   mapFuelType,
   mapTransmission,
   mapVehicleStatus,
   parseMoneyInput,
-  pickFromGallery,
+  pickMultipleFromGallery,
+  formatMediaSelectionLabel,
   unwrapData,
   unwrapList,
+  type FieldErrors,
   type PickedMedia,
 } from '../../../utils';
 import type {
@@ -95,6 +100,9 @@ const INITIAL_FORM: AddVehicleForm = {
   securityDeposit: '',
   extraKmCharge: '',
   lateReturnFee: '',
+  weekendSurge: false,
+  vipDiscount: false,
+  taxInclusive: false,
   insuranceProvider: '',
   policyNumber: '',
   coverageType: '',
@@ -120,12 +128,13 @@ export function useAddVehicleController(): AddVehicleController {
   const vehiclesCache = useAppSelector(state => state.dataCache.vehicles);
   const [currentStep, setCurrentStep] = useState<AddVehicleStepId>(0);
   const [form, setForm] = useState<AddVehicleForm>(INITIAL_FORM);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<string[]>(CATEGORIES);
-  const [specSheet, setSpecSheet] = useState<PickedMedia | null>(null);
-  const [insuranceDoc, setInsuranceDoc] = useState<PickedMedia | null>(null);
-  const [registrationDoc, setRegistrationDoc] = useState<PickedMedia | null>(null);
-  const [images, setImages] = useState<Record<string, PickedMedia>>({});
+  const [specSheet, setSpecSheet] = useState<PickedMedia[]>([]);
+  const [insuranceDoc, setInsuranceDoc] = useState<PickedMedia[]>([]);
+  const [registrationDoc, setRegistrationDoc] = useState<PickedMedia[]>([]);
+  const [images, setImages] = useState<Record<string, PickedMedia[]>>({});
 
   const fetchVehiclesData = useCallback(
     (options?: {silent?: boolean}) => {
@@ -168,6 +177,14 @@ export function useAddVehicleController(): AddVehicleController {
   const setField = useCallback(
     <K extends keyof AddVehicleForm>(key: K, value: AddVehicleForm[K]) => {
       setForm(prev => ({...prev, [key]: value}));
+      setFieldErrors(prev => clearFieldError(prev, key));
+    },
+    [],
+  );
+
+  const togglePricingFlag = useCallback(
+    (key: 'weekendSurge' | 'vipDiscount' | 'taxInclusive') => {
+      setForm(prev => ({...prev, [key]: !prev[key]}));
     },
     [],
   );
@@ -175,13 +192,54 @@ export function useAddVehicleController(): AddVehicleController {
   const canGoPrevious = currentStep > 0;
   const isLastStep = currentStep === 5;
 
+  const validateStep = useCallback(
+    (step: AddVehicleStepId): boolean => {
+      let errors: FieldErrors = {};
+      if (step === 0) {
+        errors = buildFieldErrors([
+          {key: 'make', value: form.make, label: 'Make'},
+          {key: 'model', value: form.model, label: 'Model'},
+          {key: 'year', value: form.year, label: 'Year'},
+        ]);
+        if (!errors.year && form.year.trim()) {
+          const yearNum = Number(form.year.trim());
+          if (
+            !Number.isFinite(yearNum) ||
+            yearNum < 1900 ||
+            yearNum > 2100
+          ) {
+            errors.year = 'Enter a valid year';
+          }
+        }
+      } else if (step === 2) {
+        errors = buildFieldErrors([
+          {key: 'dailyRate', value: form.dailyRate, label: 'Daily rate'},
+        ]);
+      }
+      setFieldErrors(errors);
+      return !hasFieldErrors(errors);
+    },
+    [form],
+  );
+
   const imageUploads = useMemo(
     () =>
-      IMAGE_SLOTS.map(slot => ({
-        id: slot.id,
-        title: slot.title,
-        fileName: images[slot.id]?.name ?? null,
-      })),
+      IMAGE_SLOTS.map(slot => {
+        const slotImages = images[slot.id] ?? [];
+        const count = slotImages.length;
+        let fileName: string | null = null;
+        if (count === 1) {
+          fileName = slotImages[0].name;
+        } else if (count > 1) {
+          fileName = `${count} photos selected`;
+        }
+        return {
+          id: slot.id,
+          title: slot.title,
+          fileName,
+          count,
+        };
+      }),
     [images],
   );
 
@@ -198,6 +256,16 @@ export function useAddVehicleController(): AddVehicleController {
       {label: 'PLATE', value: form.registrationPlate},
       {label: 'DAILY RATE', value: form.dailyRate},
       {label: 'DEPOSIT', value: form.securityDeposit},
+      {
+        label: 'PRICING FLAGS',
+        value: [
+          form.weekendSurge ? 'Weekend surge 12%' : null,
+          form.vipDiscount ? 'VIP discount' : null,
+          form.taxInclusive ? 'Tax inclusive' : null,
+        ]
+          .filter(Boolean)
+          .join(' · ') || 'None',
+      },
       {label: 'INSURANCE', value: form.coverageType},
     ],
     [form],
@@ -253,6 +321,19 @@ export function useAddVehicleController(): AddVehicleController {
         'late_return_fee',
         parseMoneyInput(form.lateReturnFee),
       );
+      if (form.weekendSurge) {
+        formData.append('features[]', 'Weekend surge 12%');
+        appendField(formData, 'weekend_surge', 1);
+        appendField(formData, 'weekend_surge_percent', 12);
+      }
+      if (form.vipDiscount) {
+        formData.append('features[]', 'VIP discount');
+        appendField(formData, 'vip_discount', 1);
+      }
+      if (form.taxInclusive) {
+        formData.append('features[]', 'Tax inclusive');
+        appendField(formData, 'tax_inclusive', 1);
+      }
       appendField(formData, 'insurance_provider', form.insuranceProvider);
       appendField(formData, 'policy_number', form.policyNumber);
       appendField(formData, 'coverage_type', form.coverageType);
@@ -260,8 +341,8 @@ export function useAddVehicleController(): AddVehicleController {
       appendField(formData, 'registration_expiry', form.registrationExpiry);
       appendField(formData, 'ownership', form.ownership);
 
-      if (specSheet) {
-        appendMediaToFormData(formData, 'spec_sheet', specSheet);
+      if (specSheet.length) {
+        appendMediaToFormData(formData, 'spec_sheet', specSheet[0]);
       }
 
       const created = await vehicleManagementVehiclesService.createVehicles(
@@ -272,38 +353,58 @@ export function useAddVehicleController(): AddVehicleController {
 
       if (vehicleId) {
         const imageEntries = Object.entries(images);
-        for (const [, media] of imageEntries) {
-          try {
-            await vehicleManagementVehiclesService.uploadImages(
-              vehicleId,
-              createMediaFormData('image', media),
-            );
-          } catch {
-            // continue
+        for (const [, mediaList] of imageEntries) {
+          for (const media of mediaList) {
+            try {
+              await vehicleManagementVehiclesService.uploadImages(
+                vehicleId,
+                createMediaFormData('image', media),
+              );
+            } catch {
+              // continue
+            }
           }
         }
-        if (insuranceDoc) {
-          try {
-            await vehicleManagementVehiclesService.uploadDocuments(
-              vehicleId,
-              createMediaFormData('document', insuranceDoc, {
-                type: 'insurance',
-              }),
-            );
-          } catch {
-            // continue
+        if (insuranceDoc.length) {
+          for (const media of insuranceDoc) {
+            try {
+              await vehicleManagementVehiclesService.uploadDocuments(
+                vehicleId,
+                createMediaFormData('document', media, {
+                  type: 'insurance',
+                }),
+              );
+            } catch {
+              // continue
+            }
           }
         }
-        if (registrationDoc) {
-          try {
-            await vehicleManagementVehiclesService.uploadDocuments(
-              vehicleId,
-              createMediaFormData('document', registrationDoc, {
-                type: 'registration',
-              }),
-            );
-          } catch {
-            // continue
+        if (registrationDoc.length) {
+          for (const media of registrationDoc) {
+            try {
+              await vehicleManagementVehiclesService.uploadDocuments(
+                vehicleId,
+                createMediaFormData('document', media, {
+                  type: 'registration',
+                }),
+              );
+            } catch {
+              // continue
+            }
+          }
+        }
+        if (specSheet.length > 1) {
+          for (const media of specSheet.slice(1)) {
+            try {
+              await vehicleManagementVehiclesService.uploadDocuments(
+                vehicleId,
+                createMediaFormData('document', media, {
+                  type: 'spec_sheet',
+                }),
+              );
+            } catch {
+              // continue
+            }
           }
         }
       }
@@ -332,11 +433,23 @@ export function useAddVehicleController(): AddVehicleController {
 
   const onNextPress = useCallback(() => {
     if (isLastStep) {
+      if (!validateStep(0)) {
+        setCurrentStep(0);
+        return;
+      }
+      if (!validateStep(2)) {
+        setCurrentStep(2);
+        return;
+      }
       submitVehicle();
       return;
     }
+    if (!validateStep(currentStep)) {
+      return;
+    }
+    setFieldErrors({});
     setCurrentStep(prev => (prev + 1) as AddVehicleStepId);
-  }, [isLastStep, submitVehicle]);
+  }, [currentStep, isLastStep, submitVehicle, validateStep]);
 
   const onBackPress = useCallback(() => {
     navigation.goBack();
@@ -347,54 +460,69 @@ export function useAddVehicleController(): AddVehicleController {
       navigation.goBack();
       return;
     }
+    setFieldErrors({});
     setCurrentStep(prev => (prev - 1) as AddVehicleStepId);
   }, [currentStep, navigation]);
 
   const onStepPress = useCallback((stepId: number) => {
     if (stepId <= currentStep) {
+      setFieldErrors({});
       setCurrentStep(stepId as AddVehicleStepId);
     }
   }, [currentStep]);
 
-  const pickMedia = useCallback(async (label: string) => {
-    const media = await pickFromGallery();
-    if (!media) {
-      return null;
+  const pickMediaList = useCallback(async (label: string) => {
+    const media = await pickMultipleFromGallery();
+    if (!media.length) {
+      return [];
     }
-    showMessage({message: `${label} selected`, type: 'success'});
+    showMessage({
+      message: `${media.length} file${media.length === 1 ? '' : 's'} selected for ${label}`,
+      type: 'success',
+    });
     return media;
   }, []);
 
   const onSpecSheetPress = useCallback(async () => {
-    const media = await pickMedia('Spec sheet');
-    if (media) {
-      setSpecSheet(media);
+    const media = await pickMediaList('Spec sheet');
+    if (media.length) {
+      setSpecSheet(prev => [...prev, ...media]);
     }
-  }, [pickMedia]);
+  }, [pickMediaList]);
 
   const onInsuranceDocPress = useCallback(async () => {
-    const media = await pickMedia('Insurance certificate');
-    if (media) {
-      setInsuranceDoc(media);
+    const media = await pickMediaList('Insurance certificate');
+    if (media.length) {
+      setInsuranceDoc(prev => [...prev, ...media]);
     }
-  }, [pickMedia]);
+  }, [pickMediaList]);
 
   const onRegistrationDocPress = useCallback(async () => {
-    const media = await pickMedia('Registration card');
-    if (media) {
-      setRegistrationDoc(media);
+    const media = await pickMediaList('Registration card');
+    if (media.length) {
+      setRegistrationDoc(prev => [...prev, ...media]);
     }
-  }, [pickMedia]);
+  }, [pickMediaList]);
 
   const onImageUploadPress = useCallback(
     async (id: string) => {
       const slot = IMAGE_SLOTS.find(item => item.id === id);
-      const media = await pickMedia(slot?.title ?? 'Image');
-      if (media) {
-        setImages(prev => ({...prev, [id]: media}));
+      const picked = await pickMultipleFromGallery();
+      if (!picked.length) {
+        return;
       }
+      setImages(prev => ({
+        ...prev,
+        [id]: [...(prev[id] ?? []), ...picked],
+      }));
+      showMessage({
+        message: `${picked.length} photo${picked.length === 1 ? '' : 's'} added to ${
+          slot?.title ?? 'slot'
+        }`,
+        type: 'success',
+      });
     },
-    [pickMedia],
+    [],
   );
 
   return {
@@ -408,12 +536,14 @@ export function useAddVehicleController(): AddVehicleController {
     isLastStep,
     submitting,
     reviewFields,
-    specSheetName: specSheet?.name ?? null,
-    insuranceDocName: insuranceDoc?.name ?? null,
-    registrationDocName: registrationDoc?.name ?? null,
+    specSheetName: formatMediaSelectionLabel(specSheet),
+    insuranceDocName: formatMediaSelectionLabel(insuranceDoc),
+    registrationDocName: formatMediaSelectionLabel(registrationDoc),
     imageUploads,
     categoryOptions: categories,
     setField,
+    fieldErrors,
+    togglePricingFlag,
     onNextPress,
     onPreviousPress,
     onBackPress,

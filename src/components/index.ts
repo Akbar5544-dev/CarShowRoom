@@ -46,6 +46,8 @@ export {AssignShiftModal} from './AssignShiftModal';
 export type {AssignShiftFormValues} from './AssignShiftModal';
 export {ExportPdfModal} from './ExportPdfModal';
 export type {ExportFormat} from './ExportPdfModal';
+export {DateRangeFilterModal} from './DateRangeFilterModal';
+export type {DateRangePreset} from './DateRangeFilterModal';
 export {ActiveRentalCard} from './ActiveRentalCard';
 export type {ActiveRental, RentalStatus} from './ActiveRentalCard';
 export {RentalsReturnsChart} from './RentalsReturnsChart';

@@ -21,8 +21,8 @@ import {
   EMPLOYMENT_STATUS_OPTIONS,
   BASIC_SALARY_OPTIONS,
   Icon,
-  OnboardingStepper,
   Screen,
+  VehicleWizardStepper,
 } from '../../../components';
 import {useThemedStyles, useThemeColors} from '../../../theme';
 import {createStyles} from './styles';
@@ -41,11 +41,11 @@ export function AddEmployee() {
     isLastStep,
     submitting,
     setField,
+    fieldErrors,
     onNextPress,
     onPreviousPress,
     onBackPress,
-    onCancelPress,
-    onSaveDraftPress,
+    onStepPress,
     onUploadPhotoPress,
     onDocumentUploadPress,
   } = useAddEmployeeController();
@@ -78,20 +78,15 @@ export function AddEmployee() {
                 </Text>
               </View>
             </View>
-            <View style={styles.headerActions}>
-              <Pressable style={styles.outlineBtn} onPress={onSaveDraftPress}>
-                <Icon name="saveDraft" size={12} />
-                <Text style={styles.outlineBtnText}>Save Draft</Text>
-              </Pressable>
-              <Pressable style={styles.outlineBtn} onPress={onCancelPress}>
-                <Text style={styles.outlineBtnText}>Cancel</Text>
-              </Pressable>
-            </View>
           </View>
 
-          <View style={styles.card}>
-            <OnboardingStepper steps={steps} currentStep={currentStep} />
+          <VehicleWizardStepper
+            steps={steps}
+            currentStep={currentStep}
+            onStepPress={onStepPress}
+          />
 
+          <View style={styles.card}>
             <View style={styles.formPanel}>
               {currentStep === 0 ? (
                 <View style={styles.stepBody}>
@@ -147,6 +142,7 @@ export function AddEmployee() {
                         value={form.firstName}
                         onChangeText={text => setField('firstName', text)}
                         placeholder="Ahsan"
+                        error={fieldErrors.firstName}
                       />
                       <FormField
                         label="Last Name"
@@ -198,7 +194,7 @@ export function AddEmployee() {
                         onChangeText={text =>
                           setField('emergencyContact', text)
                         }
-                        placeholder="Fatima Malik · +92 300 000-0000"
+                        placeholder="Contact"
                       />
                     </FormRow>
                     <FormField
@@ -237,13 +233,15 @@ export function AddEmployee() {
                           options={EMPLOYEE_ROLE_OPTIONS}
                           placeholder="Select"
                           onChange={value => setField('role', value)}
+                          error={fieldErrors.role}
                         />
                         <FormField
                           label="Password"
                           value={form.password}
                           onChangeText={text => setField('password', text)}
-                          placeholder="Set a strong password"
+                          placeholder="Password"
                           secureTextEntry
+                          error={fieldErrors.password}
                         />
                       </FormRow>
                     ) : null}

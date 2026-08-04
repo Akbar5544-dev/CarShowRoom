@@ -23,7 +23,6 @@ export function RoleOverview() {
   const {
     role,
     onBackPress,
-    onDuplicatePress,
     onDeletePress,
     onEditPress,
     onAssignUserPress,
@@ -67,18 +66,24 @@ export function RoleOverview() {
                       {role.userCount} users assigned
                     </Text>
                   </View>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusBadgeText}>{role.status}</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      role.status === 'Active' && styles.statusBadgeActive,
+                    ]}>
+                    <Text
+                      style={[
+                        styles.statusBadgeText,
+                        role.status === 'Active' && styles.statusBadgeTextActive,
+                      ]}>
+                      {role.status}
+                    </Text>
                   </View>
                 </View>
               </View>
             </View>
 
             <View style={styles.actionRow}>
-              <Pressable style={styles.outlineBtn} onPress={onDuplicatePress}>
-                <Icon name="iconDuplicate" size={12} color={colors.textDark} />
-                <Text style={styles.outlineBtnText}>Duplicate</Text>
-              </Pressable>
               <Pressable style={styles.outlineBtn} onPress={onDeletePress}>
                 <Icon name="iconTrash" size={12} />
                 <Text style={[styles.outlineBtnText, styles.deleteBtnText]}>

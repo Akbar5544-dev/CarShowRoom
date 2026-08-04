@@ -936,6 +936,125 @@ export const iconXml = {
 <path d="M2.6 10.4H17.4" stroke="#071123" stroke-width="1.4" stroke-linecap="round"/>
 </svg>
 `,
+  /** Customer feed / design-ref icons */
+  userOutline: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="12" cy="7" r="4" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  message: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  eye: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="12" cy="12" r="3" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  heart: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  heartFill: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#EF4444" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  bookmark: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  bookmarkFill: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="#2563EB" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  shareUpload: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="16 6 12 2 8 6" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<line x1="12" y1="2" x2="12" y2="15" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  verifiedCheck: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<polyline points="20 6 9 17 4 12" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
+`,
+  gavel: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="m14.5 12.5 7 7" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m11 16 2-2 5.5 5.5-2 2z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m5 8 8-8 3 3-8 8z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2 22h8" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  filterFunnel: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
+`,
+  chevronRight: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
+`,
+  logout: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="16 17 21 12 16 7" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<line x1="21" y1="12" x2="9" y2="12" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  settingsGear: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="3" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  cameraOutline: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="12" cy="13" r="4" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  mapPin: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="12" cy="10" r="3" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  sun: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="4" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  moon: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  globe: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="10" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  playFill: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<polygon points="5 3 19 12 5 21 5 3" fill="#071123" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  userCheck: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="8.5" cy="7" r="4" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="17 11 19 13 23 9" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
+`,
+  phoneOutline: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  clockOutline: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="10" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="12 6 12 12 16 14" stroke="#071123" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
+`,
+  starFill: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#F59E0B" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+  plusOutline: `<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<line x1="12" y1="5" x2="12" y2="19" stroke="#071123" stroke-width="2" stroke-linecap="round"/>
+<line x1="5" y1="12" x2="19" y2="12" stroke="#071123" stroke-width="2" stroke-linecap="round"/>
+</svg>
+`,
 } as const;
 
 export type IconName = keyof typeof iconXml;

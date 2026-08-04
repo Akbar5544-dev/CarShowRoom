@@ -15,7 +15,7 @@ import {
   pickVehicleImageUri,
   unwrapData,
 } from '../../../utils';
-import {createMediaFormData, pickFromGallery} from '../../../utils/mediaPicker';
+import {createMediaFormData, pickMultipleFromGallery} from '../../../utils/mediaPicker';
 import type {
   EditVehicleController,
   EditVehicleForm,
@@ -173,24 +173,35 @@ export function useEditVehicleController(): EditVehicleController {
     if (!params.vehicleId) {
       return;
     }
-    const picked = await pickFromGallery();
-    if (!picked?.uri) {
+    const picked = await pickMultipleFromGallery();
+    if (!picked.length) {
+      return;
+    }
+    const remaining = Math.max(0, 12 - photoUris.length);
+    const batch = picked.slice(0, remaining);
+    if (!batch.length) {
+      showMessage({message: 'Photo limit reached (12 max)', type: 'warning'});
       return;
     }
     try {
-      await vehicleManagementVehiclesService.uploadImages(
-        params.vehicleId,
-        createMediaFormData('image', picked),
-      );
-      setPhotoUris(current => [...current, picked.uri!].slice(0, 12));
-      showMessage({message: 'Photo uploaded', type: 'success'});
+      for (const media of batch) {
+        await vehicleManagementVehiclesService.uploadImages(
+          params.vehicleId,
+          createMediaFormData('image', media),
+        );
+      }
+      setPhotoUris(current => [...current, ...batch.map(item => item.uri)].slice(0, 12));
+      showMessage({
+        message: `${batch.length} photo${batch.length === 1 ? '' : 's'} uploaded`,
+        type: 'success',
+      });
     } catch (error) {
       showMessage({
         message: getApiErrorMessage(error, 'Failed to upload photo'),
         type: 'danger',
       });
     }
-  }, [params.vehicleId]);
+  }, [params.vehicleId, photoUris.length]);
 
   const registerSectionOffset = useCallback((id: EditVehicleSectionId, offset: number) => {
     sectionOffsets.current[id] = offset;

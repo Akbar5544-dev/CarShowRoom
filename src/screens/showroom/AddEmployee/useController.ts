@@ -8,14 +8,19 @@ import {staffManagementStaffService} from '../../../services';
 import {
   appendMediaToFormData,
   asRecord,
+  buildFieldErrors,
+  clearFieldError,
   createMediaFormData,
+  hasFieldErrors,
   mapEmploymentType,
   mapGender,
   mapStaffStatus,
   parseMoneyInput,
   pickFromGallery,
+  pickMultipleFromGallery,
   toIsoDate,
   unwrapData,
+  type FieldErrors,
   type PickedMedia,
 } from '../../../utils';
 import type {
@@ -29,30 +34,10 @@ import type {DocumentUploadItem} from '../../../components/DocumentUploadGrid';
 type Nav = NativeStackNavigationProp<StaffStackParamList, 'AddEmployee'>;
 
 const STEPS: AddEmployeeStep[] = [
-  {
-    id: 0,
-    label: 'Personal Information',
-    icon: 'stepPerson',
-    activeIcon: 'stepPersonActive',
-  },
-  {
-    id: 1,
-    label: 'Employment Details',
-    icon: 'stepEmployment',
-    activeIcon: 'stepEmploymentActive',
-  },
-  {
-    id: 2,
-    label: 'Bank Details',
-    icon: 'stepBank',
-    activeIcon: 'stepBankActive',
-  },
-  {
-    id: 3,
-    label: 'Upload Documents',
-    icon: 'stepDocuments',
-    activeIcon: 'stepDocumentsActive',
-  },
+  {id: 0, label: 'Personal'},
+  {id: 1, label: 'Employment'},
+  {id: 2, label: 'Bank'},
+  {id: 3, label: 'Documents'},
 ];
 
 const DOCUMENT_UPLOAD_DEFS = [
@@ -92,6 +77,13 @@ const INITIAL_FORM: AddEmployeeForm = {
   iban: '',
 };
 
+const ROLE_API_MAP: Record<string, string> = {
+  'Rental Agent': 'rental-agent',
+  'Fleet Coordinator': 'fleet-manager',
+  Mechanic: 'mechanic',
+  'Support Lead': 'support',
+};
+
 function appendField(
   formData: FormData,
   key: string,
@@ -107,13 +99,15 @@ export function useAddEmployeeController(): AddEmployeeController {
   const navigation = useNavigation<Nav>();
   const [currentStep, setCurrentStep] = useState<AddEmployeeStepId>(0);
   const [form, setForm] = useState<AddEmployeeForm>(INITIAL_FORM);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [photo, setPhoto] = useState<PickedMedia | null>(null);
-  const [documents, setDocuments] = useState<Record<string, PickedMedia>>({});
+  const [documents, setDocuments] = useState<Record<string, PickedMedia[]>>({});
 
   const setField = useCallback(
     <K extends keyof AddEmployeeForm>(key: K, value: AddEmployeeForm[K]) => {
       setForm(prev => ({...prev, [key]: value}));
+      setFieldErrors(prev => clearFieldError(prev, key));
     },
     [],
   );
@@ -123,15 +117,47 @@ export function useAddEmployeeController(): AddEmployeeController {
 
   const documentUploads: DocumentUploadItem[] = useMemo(
     () =>
-      DOCUMENT_UPLOAD_DEFS.map(item => ({
-        ...item,
-        fileName: documents[item.id]?.name ?? null,
-      })),
+      DOCUMENT_UPLOAD_DEFS.map(item => {
+        const files = documents[item.id] ?? [];
+        return {
+          ...item,
+          fileName: files.length === 1 ? files[0].name : null,
+          count: files.length > 1 ? files.length : files.length ? 1 : 0,
+        };
+      }),
     [documents],
+  );
+
+  const validateStep = useCallback(
+    (step: AddEmployeeStepId): boolean => {
+      let errors: FieldErrors = {};
+      if (step === 0) {
+        const checks: Array<{key: string; value: unknown; label: string}> = [
+          {key: 'firstName', value: form.firstName, label: 'First name'},
+        ];
+        if (form.createLogin) {
+          checks.push(
+            {key: 'role', value: form.role, label: 'Role'},
+            {key: 'password', value: form.password, label: 'Password'},
+          );
+        }
+        errors = buildFieldErrors(checks);
+        if (form.createLogin && form.password.trim() && form.password.length < 8) {
+          errors.password = 'Password must be at least 8 characters';
+        }
+      }
+      setFieldErrors(errors);
+      return !hasFieldErrors(errors);
+    },
+    [form],
   );
 
   const submitStaff = useCallback(async () => {
     if (submitting) {
+      return;
+    }
+    if (!validateStep(0)) {
+      setCurrentStep(0);
       return;
     }
     setSubmitting(true);
@@ -168,6 +194,12 @@ export function useAddEmployeeController(): AddEmployeeController {
         'status',
         mapStaffStatus(form.employmentStatus) || 'active',
       );
+      if (form.createLogin) {
+        formData.append('create_login', '1');
+        appendField(formData, 'password', form.password);
+        const roleForApi = ROLE_API_MAP[form.role] ?? form.role;
+        appendField(formData, 'role', roleForApi);
+      }
       if (photo) {
         appendMediaToFormData(formData, 'photo', photo);
       }
@@ -192,14 +224,16 @@ export function useAddEmployeeController(): AddEmployeeController {
           }
         }
         const docEntries = Object.entries(documents);
-        for (const [type, media] of docEntries) {
-          try {
-            await staffManagementStaffService.uploadDocuments(
-              staffId,
-              createMediaFormData('document', media, {type}),
-            );
-          } catch {
-            // Continue remaining docs if one fails
+        for (const [type, mediaList] of docEntries) {
+          for (const media of mediaList) {
+            try {
+              await staffManagementStaffService.uploadDocuments(
+                staffId,
+                createMediaFormData('document', media, {type}),
+              );
+            } catch {
+              // Continue remaining docs if one fails
+            }
           }
         }
       }
@@ -217,20 +251,25 @@ export function useAddEmployeeController(): AddEmployeeController {
     } finally {
       setSubmitting(false);
     }
-  }, [documents, form, navigation, photo, submitting]);
+  }, [documents, form, navigation, photo, submitting, validateStep]);
 
   const onNextPress = useCallback(() => {
+    if (!validateStep(currentStep)) {
+      return;
+    }
     if (isLastStep) {
       submitStaff();
       return;
     }
+    setFieldErrors({});
     setCurrentStep(prev => (prev + 1) as AddEmployeeStepId);
-  }, [isLastStep, submitStaff]);
+  }, [currentStep, isLastStep, submitStaff, validateStep]);
 
   const onPreviousPress = useCallback(() => {
     if (!canGoPrevious) {
       return;
     }
+    setFieldErrors({});
     setCurrentStep(prev => (prev - 1) as AddEmployeeStepId);
   }, [canGoPrevious]);
 
@@ -238,11 +277,15 @@ export function useAddEmployeeController(): AddEmployeeController {
     navigation.goBack();
   }, [navigation]);
 
-  const onCancelPress = useCallback(() => {
-    navigation.goBack();
-  }, [navigation]);
-
-  const onSaveDraftPress = useCallback(() => {}, []);
+  const onStepPress = useCallback(
+    (stepId: number) => {
+      if (stepId <= currentStep) {
+        setFieldErrors({});
+        setCurrentStep(stepId as AddEmployeeStepId);
+      }
+    },
+    [currentStep],
+  );
 
   const onUploadPhotoPress = useCallback(async () => {
     const media = await pickFromGallery();
@@ -255,12 +298,18 @@ export function useAddEmployeeController(): AddEmployeeController {
 
   const onDocumentUploadPress = useCallback(
     async (item: DocumentUploadItem) => {
-      const media = await pickFromGallery();
-      if (!media) {
+      const picked = await pickMultipleFromGallery();
+      if (!picked.length) {
         return;
       }
-      setDocuments(prev => ({...prev, [item.id]: media}));
-      showMessage({message: `${item.title} selected`, type: 'success'});
+      setDocuments(prev => ({
+        ...prev,
+        [item.id]: [...(prev[item.id] ?? []), ...picked],
+      }));
+      showMessage({
+        message: `${picked.length} photo${picked.length === 1 ? '' : 's'} added to ${item.title}`,
+        type: 'success',
+      });
     },
     [],
   );
@@ -278,11 +327,11 @@ export function useAddEmployeeController(): AddEmployeeController {
       isLastStep,
       submitting,
       setField,
+      fieldErrors,
       onNextPress,
       onPreviousPress,
       onBackPress,
-      onCancelPress,
-      onSaveDraftPress,
+      onStepPress,
       onUploadPhotoPress,
       onDocumentUploadPress,
     }),
@@ -295,11 +344,11 @@ export function useAddEmployeeController(): AddEmployeeController {
       isLastStep,
       submitting,
       setField,
+      fieldErrors,
       onNextPress,
       onPreviousPress,
       onBackPress,
-      onCancelPress,
-      onSaveDraftPress,
+      onStepPress,
       onUploadPhotoPress,
       onDocumentUploadPress,
     ],

@@ -10,7 +10,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   AppDatePicker,
   AppHeader,
-  formatDateInputValue,
+  formatDateOnly,
   Icon,
   Screen,
   useParsedPickerDate,
@@ -29,6 +29,7 @@ function Field({
   placeholder,
   keyboardType,
   secureTextEntry,
+  error,
 }: {
   styles: Styles;
   label: string;
@@ -37,6 +38,7 @@ function Field({
   placeholder?: string;
   keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad';
   secureTextEntry?: boolean;
+  error?: string;
 }) {
   const colors = useThemeColors();
   return (
@@ -49,8 +51,9 @@ function Field({
         placeholderTextColor={colors.textSoft}
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
-        style={styles.input}
+        style={[styles.input, error ? styles.inputError : null]}
       />
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
     </View>
   );
 }
@@ -60,11 +63,13 @@ function DateField({
   label,
   value,
   onChangeText,
+  error,
 }: {
   styles: Styles;
   label: string;
   value: string;
   onChangeText: (text: string) => void;
+  error?: string;
 }) {
   const colors = useThemeColors();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -73,11 +78,11 @@ function DateField({
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={styles.dateInput}>
+      <View style={[styles.dateInput, error ? styles.inputError : null]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          placeholder="mm/dd/yyyy, hh:mm AM"
+          placeholder="mm/dd/yyyy"
           placeholderTextColor={colors.textSoft}
           style={styles.dateText}
         />
@@ -88,12 +93,70 @@ function DateField({
           <Icon name="calendarField" size={11} color={colors.textSoft} />
         </Pressable>
       </View>
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
       <AppDatePicker
         visible={pickerOpen}
         value={pickerValue}
         onClose={() => setPickerOpen(false)}
         onChange={date => {
-          onChangeText(formatDateInputValue(date, value, true));
+          onChangeText(formatDateOnly(date));
+        }}
+      />
+    </View>
+  );
+}
+
+function TimeField({
+  styles,
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  error,
+}: {
+  styles: Styles;
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  error?: string;
+}) {
+  const colors = useThemeColors();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerValue = useParsedPickerDate(
+    value ? `01/01/2000, ${value}` : '',
+  );
+
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={[styles.dateInput, error ? styles.inputError : null]}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder ?? '12:00'}
+          placeholderTextColor={colors.textSoft}
+          keyboardType="default"
+          style={styles.dateText}
+        />
+        <Pressable
+          onPress={() => setPickerOpen(true)}
+          hitSlop={8}
+          accessibilityLabel="Open time picker">
+          <Icon name="shiftClock" size={11} color={colors.textSoft} />
+        </Pressable>
+      </View>
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+      <AppDatePicker
+        visible={pickerOpen}
+        value={pickerValue}
+        mode="time"
+        title="Select Time"
+        onClose={() => setPickerOpen(false)}
+        onChange={date => {
+          const hours = date.getHours();
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          onChangeText(`${hours}:${minutes}`);
         }}
       />
     </View>
@@ -126,6 +189,7 @@ export function NewRental() {
     totals,
     submitting,
     setField,
+    fieldErrors,
     onSelectExistingCustomer,
     onSelectVehicle,
     onToggleAddon,
@@ -246,6 +310,7 @@ export function NewRental() {
                       value={form.customerName}
                       onChangeText={text => setField('customerName', text)}
                       placeholder="Ayesha Khan"
+                      error={fieldErrors.customerName}
                     />
                   </View>
                   <View style={styles.col}>
@@ -269,6 +334,7 @@ export function NewRental() {
                       onChangeText={text => setField('phone', text)}
                       placeholder="+92 300 1234567"
                       keyboardType="phone-pad"
+                      error={fieldErrors.phone}
                     />
                   </View>
                   <View style={styles.col}>
@@ -294,6 +360,9 @@ export function NewRental() {
 
             {currentStep === 1 ? (
               <View style={styles.stack}>
+                {fieldErrors.vehicle ? (
+                  <Text style={styles.fieldError}>{fieldErrors.vehicle}</Text>
+                ) : null}
                 {vehicleOptions.map(option => {
                   const selected = option.id === selectedVehicleId;
                   return (
@@ -352,14 +421,39 @@ export function NewRental() {
                       label="Pickup date"
                       value={form.pickupDate}
                       onChangeText={text => setField('pickupDate', text)}
+                      error={fieldErrors.pickupDate}
                     />
                   </View>
+                  <View style={styles.col}>
+                    <TimeField
+                      styles={styles}
+                      label="Pickup time"
+                      value={form.pickupTime}
+                      onChangeText={text => setField('pickupTime', text)}
+                      placeholder="12:00"
+                      error={fieldErrors.pickupTime}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.row}>
                   <View style={styles.col}>
                     <DateField
                       styles={styles}
                       label="Return date"
                       value={form.returnDate}
                       onChangeText={text => setField('returnDate', text)}
+                      error={fieldErrors.returnDate}
+                    />
+                  </View>
+                  <View style={styles.col}>
+                    <TimeField
+                      styles={styles}
+                      label="Return time"
+                      value={form.returnTime}
+                      onChangeText={text => setField('returnTime', text)}
+                      placeholder="17:00"
+                      error={fieldErrors.returnTime}
                     />
                   </View>
                 </View>
@@ -523,43 +617,55 @@ export function NewRental() {
                   })}
                 </View>
 
-                <Field
-                  styles={styles}
-                  label="Cardholder name"
-                  value={form.cardholder}
-                  onChangeText={text => setField('cardholder', text)}
-                  placeholder="Ayesha Khan"
-                />
-                <Field
-                  styles={styles}
-                  label="Card number"
-                  value={form.cardNumber}
-                  onChangeText={text => setField('cardNumber', text)}
-                  placeholder="1234 5678 9012 3456"
-                  keyboardType="number-pad"
-                />
-                <View style={styles.row}>
-                  <View style={styles.col}>
+                {selectedPaymentMethodId === 'card' ? (
+                  <>
                     <Field
                       styles={styles}
-                      label="Expiry"
-                      value={form.expiry}
-                      onChangeText={text => setField('expiry', text)}
-                      placeholder="MM/YY"
+                      label="Cardholder name"
+                      value={form.cardholder}
+                      onChangeText={text => setField('cardholder', text)}
+                      placeholder="Ayesha Khan"
+                      error={fieldErrors.cardholder}
                     />
-                  </View>
-                  <View style={styles.col}>
                     <Field
                       styles={styles}
-                      label="CVV"
-                      value={form.cvv}
-                      onChangeText={text => setField('cvv', text)}
-                      placeholder="•••"
+                      label="Card number"
+                      value={form.cardNumber}
+                      onChangeText={text => setField('cardNumber', text)}
+                      placeholder="1234 5678 9012 3456"
                       keyboardType="number-pad"
-                      secureTextEntry
+                      error={fieldErrors.cardNumber}
                     />
-                  </View>
-                </View>
+                    <View style={styles.row}>
+                      <View style={styles.col}>
+                        <Field
+                          styles={styles}
+                          label="Expiry"
+                          value={form.expiry}
+                          onChangeText={text => setField('expiry', text)}
+                          placeholder="MM/YY"
+                          error={fieldErrors.expiry}
+                        />
+                      </View>
+                      <View style={styles.col}>
+                        <Field
+                          styles={styles}
+                          label="CVV"
+                          value={form.cvv}
+                          onChangeText={text => setField('cvv', text)}
+                          placeholder="•••"
+                          keyboardType="number-pad"
+                          secureTextEntry
+                          error={fieldErrors.cvv}
+                        />
+                      </View>
+                    </View>
+                  </>
+                ) : (
+                  <Text style={{fontSize: 9.5, color: colors.textSoft}}>
+                    Card details will be shown only for Credit card.
+                  </Text>
+                )}
               </View>
             ) : null}
 
@@ -579,6 +685,7 @@ export function NewRental() {
                     style={[
                       styles.checkbox,
                       termsAccepted && styles.checkboxChecked,
+                      fieldErrors.terms ? styles.checkboxError : null,
                     ]}>
                     {termsAccepted ? (
                       <Icon name="checkWhite" size={9} color={colors.white} />
@@ -590,6 +697,9 @@ export function NewRental() {
                     summary.
                   </Text>
                 </Pressable>
+                {fieldErrors.terms ? (
+                  <Text style={styles.fieldError}>{fieldErrors.terms}</Text>
+                ) : null}
 
                 <View style={styles.field}>
                   <Text style={styles.fieldLabel}>
@@ -600,8 +710,14 @@ export function NewRental() {
                     onChangeText={text => setField('signature', text)}
                     placeholder="Ayesha Khan"
                     placeholderTextColor={colors.textSoft}
-                    style={styles.signatureInput}
+                    style={[
+                      styles.signatureInput,
+                      fieldErrors.signature ? styles.inputError : null,
+                    ]}
                   />
+                  {fieldErrors.signature ? (
+                    <Text style={styles.fieldError}>{fieldErrors.signature}</Text>
+                  ) : null}
                 </View>
               </View>
             ) : null}

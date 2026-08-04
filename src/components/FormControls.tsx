@@ -98,6 +98,7 @@ type FormFieldProps = {
   keyboardType?: TextInputProps['keyboardType'];
   fullWidth?: boolean;
   style?: ViewStyle;
+  error?: string;
 };
 
 export const FormField = memo(function FormField({
@@ -110,6 +111,7 @@ export const FormField = memo(function FormField({
   keyboardType,
   fullWidth,
   style,
+  error,
 }: FormFieldProps) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
@@ -124,8 +126,13 @@ export const FormField = memo(function FormField({
         multiline={multiline}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
-        style={[styles.input, multiline && styles.textarea]}
+        style={[
+          styles.input,
+          multiline && styles.textarea,
+          error ? styles.inputError : null,
+        ]}
       />
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
     </View>
   );
 });
@@ -141,6 +148,7 @@ type FormSelectProps = {
   title?: string;
   fullWidth?: boolean;
   style?: ViewStyle;
+  error?: string;
 };
 
 export const FormSelect = memo(function FormSelect({
@@ -153,6 +161,7 @@ export const FormSelect = memo(function FormSelect({
   title,
   fullWidth,
   style,
+  error,
 }: FormSelectProps) {
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
@@ -171,7 +180,9 @@ export const FormSelect = memo(function FormSelect({
   return (
     <View style={[styles.field, fullWidth && styles.fullWidth, style]}>
       <Text style={styles.label}>{label}</Text>
-      <Pressable style={styles.select} onPress={handlePress}>
+      <Pressable
+        style={[styles.select, error ? styles.inputError : null]}
+        onPress={handlePress}>
         <Text
           style={[styles.selectText, isPlaceholder && styles.selectPlaceholder]}
           numberOfLines={1}>
@@ -179,6 +190,7 @@ export const FormSelect = memo(function FormSelect({
         </Text>
         <Icon name="chevronDown" size={8} style={styles.chevron} />
       </Pressable>
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
 
       {hasOptions ? (
         <Modal
@@ -239,6 +251,7 @@ type FormDateFieldProps = {
   /** Keep existing time suffix when picking a date (mm/dd/yyyy, hh:mm AM). */
   includeTime?: boolean;
   style?: ViewStyle;
+  error?: string;
 };
 
 export const FormDateField = memo(function FormDateField({
@@ -248,6 +261,7 @@ export const FormDateField = memo(function FormDateField({
   placeholder = 'mm/dd/yyyy',
   includeTime,
   style,
+  error,
 }: FormDateFieldProps) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
@@ -258,7 +272,7 @@ export const FormDateField = memo(function FormDateField({
   return (
     <View style={[styles.field, style]}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.dateInput}>
+      <View style={[styles.dateInput, error ? styles.inputError : null]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -273,6 +287,7 @@ export const FormDateField = memo(function FormDateField({
           <Icon name="calendarField" size={11} />
         </Pressable>
       </View>
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
       <AppDatePicker
         visible={pickerOpen}
         value={pickerValue}
@@ -420,6 +435,15 @@ function createStyles(c: AppColors) {
     fontSize: FIGMA.inputFont,
     color: c.textDark,
     backgroundColor: c.surface,
+  },
+  inputError: {
+    borderColor: c.error,
+  },
+  fieldError: {
+    fontSize: 8.5,
+    fontWeight: '600',
+    color: c.error,
+    marginTop: 2,
   },
   textarea: {
     height: FIGMA.textareaHeight,

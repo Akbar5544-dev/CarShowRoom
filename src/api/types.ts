@@ -25,6 +25,9 @@ export type AuthRegisterPayload = {
   password: string;
   phone?: string;
   role?: 'admin' | 'customer';
+  country?: string;
+  city?: string;
+  address?: string;
 };
 
 export type AuthLoginPayload = {

@@ -111,14 +111,51 @@ export type RentalsStackParamList = {
 
 export type CustomerJobsStackParamList = {
   CustomerJobsList: undefined;
+  CustomerApplyJob: {jobId: string};
   CustomerJobDetail: {idOrSlug: string; title?: string};
 };
 
+export type CustomerShowroomsStackParamList = {
+  CustomerShowroomsList: undefined;
+  CustomerShowroomDetail: {showroomId: string};
+  CustomerProductDetail: {productId: string; showroomId: string};
+};
+
+export type CustomerAuctionStackParamList = {
+  CustomerAuctionList: undefined;
+  CustomerPlaceBid: {auctionId: string};
+};
+
+export type CustomerHomeStackParamList = {
+  CustomerHomeMain: undefined;
+  CustomerEditProfile: undefined;
+  CustomerSettings: undefined;
+  CustomerSaved: undefined;
+  CustomerLiked: undefined;
+  CustomerShared: undefined;
+  CustomerMessages: undefined;
+  CustomerConversation: {
+    conversationId: string;
+    name: string;
+    initials: string;
+    tone: 'sc' | 'aw' | 'am' | 'mech' | 'cc';
+    online: boolean;
+    verified: boolean;
+  };
+  CustomerNotifications: undefined;
+};
+
 export type CustomerTabParamList = {
-  CustomerHomeTab: undefined;
-  CustomerVehiclesTab: undefined;
-  CustomerShowroomsTab: undefined;
-  CustomerChatTab: undefined;
+  CustomerHomeTab:
+    | NavigatorScreenParams<CustomerHomeStackParamList>
+    | undefined;
+  CustomerShowroomsTab:
+    | NavigatorScreenParams<CustomerShowroomsStackParamList>
+    | undefined;
+  CustomerMechanicsTab: undefined;
+  CustomerAuctionTab:
+    | NavigatorScreenParams<CustomerAuctionStackParamList>
+    | undefined;
   CustomerJobsTab:
     | NavigatorScreenParams<CustomerJobsStackParamList>
     | undefined;

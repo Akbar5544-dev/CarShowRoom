@@ -27,5 +27,7 @@ export type VehicleListController = {
   onAuctionPress: () => void;
   onAddVehiclePress: () => void;
   onViewVehiclePress: (item: VehicleInventoryItem) => void;
+  onPostVehiclePress: (item: VehicleInventoryItem) => void;
+  onAuctionVehiclePress: (item: VehicleInventoryItem) => void;
   onItemPress: (item: VehicleInventoryItem) => void;
 };

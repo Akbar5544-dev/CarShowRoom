@@ -8,27 +8,23 @@ import {useRolesPermissionsController} from './useController';
 
 function RoleCard({
   role,
-  onMorePress,
+  onPress,
 }: {
   role: RoleCardData;
-  onMorePress: (roleId: string) => void;
+  onPress: (roleId: string) => void;
 }) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
 
   return (
-    <View style={styles.roleCard}>
+    <Pressable
+      style={styles.roleCard}
+      onPress={() => onPress(role.id)}
+      accessibilityLabel={`Open ${role.title}`}>
       <View style={styles.roleTop}>
         <View style={[styles.roleIcon, {backgroundColor: role.iconBg}]}>
           <Icon name={role.icon} size={18} color={colors.white} />
         </View>
-        <Pressable
-          style={styles.roleMenuBtn}
-          onPress={() => onMorePress(role.id)}
-          hitSlop={8}
-          accessibilityLabel={`${role.title} options`}>
-          <Icon name="moreDots" size={14} color={colors.textSecondary} />
-        </Pressable>
       </View>
 
       <View style={styles.roleBody}>
@@ -64,7 +60,7 @@ function RoleCard({
         </View>
         <Text style={styles.userCount}>{role.userCount} users</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -78,7 +74,7 @@ export function RolesPermissions() {
     onBackPress,
     onActivityLogsPress,
     onManagePress,
-    onRoleMorePress,
+    onRolePress,
   } = useRolesPermissionsController();
 
   return (
@@ -108,11 +104,13 @@ export function RolesPermissions() {
             <View style={styles.actions}>
               <Pressable style={styles.secondaryBtn} onPress={onActivityLogsPress}>
                 <Icon name="activityPulse" size={14} color={colors.textDark} />
-                <Text style={styles.secondaryBtnText}>Activity Logs</Text>
+                <Text style={styles.secondaryBtnText} numberOfLines={1}>
+                  Activity Logs
+                </Text>
               </Pressable>
               <Pressable style={styles.primaryBtn} onPress={onManagePress}>
-                <Text style={styles.primaryBtnText}>
-                  Manage Roles & Permissions
+                <Text style={styles.primaryBtnText} numberOfLines={1}>
+                  Manage Roles
                 </Text>
               </Pressable>
             </View>
@@ -132,7 +130,7 @@ export function RolesPermissions() {
                 <RoleCard
                   key={role.id}
                   role={role}
-                  onMorePress={onRoleMorePress}
+                  onPress={onRolePress}
                 />
               ))
             )}

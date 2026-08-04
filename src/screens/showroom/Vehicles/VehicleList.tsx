@@ -28,6 +28,8 @@ export function VehicleList() {
     onAuctionPress,
     onAddVehiclePress,
     onViewVehiclePress,
+    onPostVehiclePress,
+    onAuctionVehiclePress,
     onItemPress,
   } = useVehicleListController();
 
@@ -37,11 +39,19 @@ export function VehicleList() {
         <VehicleInventoryCard
           item={item}
           onViewPress={onViewVehiclePress}
+          onPostPress={onPostVehiclePress}
+          onAuctionPress={onAuctionVehiclePress}
           onItemPress={onItemPress}
         />
       </View>
     ),
-    [onItemPress, onViewVehiclePress, styles.cardWrap],
+    [
+      onAuctionVehiclePress,
+      onItemPress,
+      onPostVehiclePress,
+      onViewVehiclePress,
+      styles.cardWrap,
+    ],
   );
 
   const keyExtractor = useCallback((item: VehicleInventoryItem) => item.id, []);

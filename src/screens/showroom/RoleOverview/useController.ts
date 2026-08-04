@@ -417,25 +417,6 @@ export function useRoleOverviewController(): RoleOverviewController {
     navigation.goBack();
   }, [navigation]);
 
-  const onDuplicatePress = useCallback(async () => {
-    if (!role) {
-      return;
-    }
-    try {
-      await rolesPermissionsService.createRoles({
-        name: `${role.title} Copy`,
-        description: role.description,
-      });
-      showMessage({message: 'Role duplicated', type: 'success'});
-      navigation.goBack();
-    } catch (error) {
-      showMessage({
-        message: getApiErrorMessage(error, 'Failed to duplicate role'),
-        type: 'danger',
-      });
-    }
-  }, [navigation, role]);
-
   const onDeletePress = useCallback(async () => {
     try {
       await rolesPermissionsService.deleteRolesById(roleId);
@@ -463,7 +444,6 @@ export function useRoleOverviewController(): RoleOverviewController {
   return {
     role,
     onBackPress,
-    onDuplicatePress,
     onDeletePress,
     onEditPress,
     onAssignUserPress,

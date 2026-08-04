@@ -53,8 +53,12 @@ export const MetricCard = memo(function MetricCard({item}: MetricCardProps) {
           </Text>
         </View>
       </View>
-      <Text style={styles.label}>{item.label}</Text>
-      <Text style={styles.value}>{item.value}</Text>
+      <Text style={styles.label} numberOfLines={1}>
+        {item.label}
+      </Text>
+      <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">
+        {item.value}
+      </Text>
       <View style={styles.sparkline}>
         <Sparkline
           color={item.sparklineColor}
@@ -117,6 +121,7 @@ function createStyles(c: AppColors) {
     fontWeight: '700',
     color: c.textDark,
     letterSpacing: -0.5,
+    lineHeight: 26,
   },
   sparkline: {
     marginTop: 4,

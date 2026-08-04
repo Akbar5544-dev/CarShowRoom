@@ -21,12 +21,14 @@ type EmployeeCardProps = {
   employee: EmployeeCardData;
   onPress?: (employee: EmployeeCardData) => void;
   onProfilePress?: (employee: EmployeeCardData) => void;
+  onSalaryPress?: (employee: EmployeeCardData) => void;
 };
 
 export const EmployeeCard = memo(function EmployeeCard({
   employee,
   onPress,
   onProfilePress,
+  onSalaryPress,
 }: EmployeeCardProps) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
@@ -38,10 +40,15 @@ export const EmployeeCard = memo(function EmployeeCard({
   return (
     <Pressable style={styles.card} onPress={openProfile}>
       <View style={styles.salaryRow}>
-        <View>
+        <Pressable
+          style={styles.salaryArea}
+          onPress={e => {
+            e.stopPropagation();
+            onSalaryPress?.(employee);
+          }}>
           <Text style={styles.salaryLabel}>Salary</Text>
           <Text style={styles.salaryValue}>{employee.salary}</Text>
-        </View>
+        </Pressable>
         <Pressable style={styles.profileBtn} onPress={openProfile}>
           <Text style={styles.profileText}>Profile</Text>
           <Icon name="profileArrow" size={12} />
@@ -110,6 +117,10 @@ function createStyles(c: AppColors) {
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 9,
+  },
+  salaryArea: {
+    flex: 1,
+    paddingTop: 2,
   },
   profileText: {
     fontSize: 9,

@@ -59,7 +59,9 @@ export type NewRentalForm = {
   license: string;
   address: string;
   pickupDate: string;
+  pickupTime: string;
   returnDate: string;
+  returnTime: string;
   pickupLocation: string;
   dropoffLocation: string;
   promoCode: string;
@@ -108,6 +110,7 @@ export type NewRentalController = {
     key: K,
     value: NewRentalForm[K],
   ) => void;
+  fieldErrors: Partial<Record<keyof NewRentalForm | 'vehicle' | 'terms', string>>;
   onSelectExistingCustomer: () => void;
   onSelectVehicle: (id: string) => void;
   onToggleAddon: (id: string) => void;

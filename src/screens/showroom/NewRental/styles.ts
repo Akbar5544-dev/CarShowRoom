@@ -171,6 +171,14 @@ export const createStyles = (colors: AppColors) =>
       fontSize: 10.5,
       color: colors.textDark,
     },
+    inputError: {
+      borderColor: colors.error,
+    },
+    fieldError: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: colors.error,
+    },
     dateInput: {
       height: 31,
       borderRadius: 9,
@@ -342,6 +350,9 @@ export const createStyles = (colors: AppColors) =>
       backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    checkboxError: {
+      borderColor: colors.error,
     },
     checkboxChecked: {
       backgroundColor: colors.actionBlue,

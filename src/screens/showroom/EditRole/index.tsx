@@ -43,10 +43,6 @@ export function EditRole() {
     active,
     matrixColumns,
     matrixRows,
-    modulesCount,
-    permissionsGranted,
-    permissionsTotal,
-    summaryStatus,
     setName,
     setDescription,
     setActive,
@@ -179,38 +175,10 @@ export function EditRole() {
                 onValueChange={setActive}
                 trackColor={{
                   false: colors.border,
-                  true: colors.actionBlue,
+                  true: colors.successBright,
                 }}
                 thumbColor={colors.white}
               />
-            </View>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Summary</Text>
-            <View style={styles.summaryList}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Modules</Text>
-                <Text style={styles.summaryValue}>{modulesCount}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Permissions granted</Text>
-                <Text style={styles.summaryValue}>
-                  {permissionsGranted} / {permissionsTotal}
-                </Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Status</Text>
-                <Text
-                  style={[
-                    styles.summaryValue,
-                    active
-                      ? styles.summaryStatusActive
-                      : styles.summaryStatusInactive,
-                  ]}>
-                  {summaryStatus}
-                </Text>
-              </View>
             </View>
           </View>
         </View>

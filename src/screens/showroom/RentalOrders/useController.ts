@@ -1,9 +1,10 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
+import {Alert, Linking} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {showMessage} from 'react-native-flash-message';
 import {getApiErrorMessage} from '../../../api';
-import type {MetricCardData} from '../../../components';
+import type {DateRangePreset, MetricCardData} from '../../../components';
 import type {RentalsStackParamList} from '../../../navigation/types';
 import {
   vehicleRentalRentOrdersService,
@@ -77,20 +78,49 @@ function mapPaymentStatus(raw: string): PaymentStatus {
   return 'Paid';
 }
 
+/** Prefer actual rental status (same source as invoice detail), not invented labels. */
 function mapInvoiceStatus(
+  statusRaw: string,
   payment: PaymentStatus,
   order: OrderStatus,
 ): InvoiceStatus {
-  if (order === 'Overdue') {
-    return 'Overdue';
+  const key = statusRaw.trim().toLowerCase();
+  if (
+    key.includes('complete') ||
+    key.includes('returned') ||
+    order === 'Completed'
+  ) {
+    return 'Completed';
   }
-  if (payment === 'Paid') {
+  if (
+    key.includes('paid') ||
+    key.includes('settled') ||
+    payment === 'Paid'
+  ) {
     return 'Paid';
   }
-  if (payment === 'Pending' || payment === 'Partial') {
+  if (
+    key.includes('overdue') ||
+    key.includes('late') ||
+    order === 'Overdue'
+  ) {
+    return 'Overdue';
+  }
+  if (key.includes('draft') || key.includes('cancel')) {
+    return 'Draft';
+  }
+  if (
+    key.includes('pending') ||
+    payment === 'Pending' ||
+    payment === 'Partial'
+  ) {
     return 'Pending';
   }
-  return 'Draft';
+  if (order === 'Reserved') {
+    return 'Pending';
+  }
+  // Active rentals without explicit payment still pending settlement
+  return 'Pending';
 }
 
 function formatDateLabel(value: string): string {
@@ -124,6 +154,7 @@ type RentalRow = {
   customer: string;
   vehicle: string;
   amount: number;
+  statusRaw: string;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   startDate: string;
@@ -165,6 +196,7 @@ function mapRentalRow(item: unknown, index: number): RentalRow {
     customer: customerName,
     vehicle: vehicleLabel,
     amount,
+    statusRaw,
     orderStatus: mapOrderStatus(statusRaw),
     paymentStatus: mapPaymentStatus(pickString(row, ['payment_status'], '')),
     startDate: pickString(row, ['start_date', 'pickup_date']),
@@ -175,6 +207,71 @@ function mapRentalRow(item: unknown, index: number): RentalRow {
     returnDate: pickString(row, ['return_date', 'actual_return_date']),
     lateFee,
   };
+}
+
+const DATE_RANGE_LABEL: Record<DateRangePreset, string> = {
+  all: 'All time',
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+};
+
+function startOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function endOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setHours(23, 59, 59, 999);
+  return next;
+}
+
+function getDateRangeBounds(
+  preset: DateRangePreset,
+): {from: number; to: number} | null {
+  if (preset === 'all') {
+    return null;
+  }
+
+  const now = new Date();
+
+  if (preset === 'daily') {
+    return {
+      from: startOfDay(now).getTime(),
+      to: endOfDay(now).getTime(),
+    };
+  }
+
+  if (preset === 'weekly') {
+    const day = now.getDay();
+    const daysFromMonday = day === 0 ? 6 : day - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - daysFromMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return {
+      from: startOfDay(monday).getTime(),
+      to: endOfDay(sunday).getTime(),
+    };
+  }
+
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return {
+    from: startOfDay(firstDay).getTime(),
+    to: endOfDay(lastDay).getTime(),
+  };
+}
+
+function getRowDateTs(row: RentalRow): number | null {
+  const raw = row.startDate || row.expectedReturnDate || row.returnDate;
+  if (!raw) {
+    return null;
+  }
+  const ts = new Date(raw).getTime();
+  return Number.isFinite(ts) ? ts : null;
 }
 
 function daysBetween(start: string, end: string): number {
@@ -234,6 +331,11 @@ export function useRentalOrdersController(): RentalOrdersController {
     useState(false);
   const [isExportPdfModalVisible, setIsExportPdfModalVisible] = useState(false);
 
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'All'>('All');
+  const [dateRangePreset, setDateRangePreset] =
+    useState<DateRangePreset>('all');
+  const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
+
   const [rows, setRows] = useState<RentalRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [rentalIdByOrderId, setRentalIdByOrderId] = useState<
@@ -274,7 +376,11 @@ export function useRentalOrdersController(): RentalOrdersController {
         const completedMapped = completedList.map(mapRentalRow);
         const byId = new Map(mapped.map(row => [row.id, row]));
         completedMapped.forEach(row => {
-          byId.set(row.id, {...row, orderStatus: 'Completed'});
+          byId.set(row.id, {
+            ...row,
+            orderStatus: 'Completed',
+            statusRaw: row.statusRaw || 'completed',
+          });
         });
         setRows(Array.from(byId.values()));
       } else {
@@ -301,7 +407,35 @@ export function useRentalOrdersController(): RentalOrdersController {
   }, [fetchData]);
 
   const orders = useMemo<RentalOrderRow[]>(() => {
-    const mapped = rows.map(row => ({
+    const query = searchQuery.trim().toLowerCase();
+    const range = getDateRangeBounds(dateRangePreset);
+
+    const filtered = rows.filter(row => {
+      if (statusFilter !== 'All' && row.orderStatus !== statusFilter) {
+        return false;
+      }
+
+      if (range) {
+        const ts = getRowDateTs(row);
+        if (ts == null) {
+          return false;
+        }
+        if (ts < range.from || ts > range.to) {
+          return false;
+        }
+      }
+
+      if (!query) {
+        return true;
+      }
+
+      return (
+        row.rentalCode.toLowerCase().includes(query) ||
+        row.customer.toLowerCase().includes(query)
+      );
+    });
+
+    return filtered.map(row => ({
       id: row.id,
       orderId: row.rentalCode,
       customer: row.customer,
@@ -309,20 +443,21 @@ export function useRentalOrdersController(): RentalOrdersController {
       payment: row.paymentStatus,
       status: row.orderStatus,
     }));
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) {
-      return mapped;
-    }
-    return mapped.filter(
-      order =>
-        order.orderId.toLowerCase().includes(query) ||
-        order.customer.toLowerCase().includes(query),
-    );
-  }, [rows, searchQuery]);
+  }, [rows, searchQuery, statusFilter, dateRangePreset]);
 
   const lateReturns = useMemo<LateReturnItem[]>(() => {
+    const now = Date.now();
     return rows
-      .filter(row => row.orderStatus === 'Overdue')
+      .filter(row => {
+        if (row.orderStatus === 'Completed' || row.orderStatus === 'Cancelled') {
+          return false;
+        }
+        const expectedTs = new Date(row.expectedReturnDate).getTime();
+        if (!Number.isFinite(expectedTs)) {
+          return false;
+        }
+        return expectedTs < now;
+      })
       .map(row => ({
         id: row.id,
         customer: row.customer,
@@ -340,7 +475,11 @@ export function useRentalOrdersController(): RentalOrdersController {
       customer: row.customer,
       amount: formatMoney(row.amount),
       due: formatDateLabel(row.expectedReturnDate),
-      status: mapInvoiceStatus(row.paymentStatus, row.orderStatus),
+      status: mapInvoiceStatus(
+        row.statusRaw,
+        row.paymentStatus,
+        row.orderStatus,
+      ),
     }));
     const query = invoiceSearchQuery.trim().toLowerCase();
     if (!query) {
@@ -356,11 +495,15 @@ export function useRentalOrdersController(): RentalOrdersController {
   const invoiceMetrics = useMemo<MetricCardData[]>(() => {
     const allInvoices = rows.map(row => ({
       amount: row.amount,
-      status: mapInvoiceStatus(row.paymentStatus, row.orderStatus),
+      status: mapInvoiceStatus(
+        row.statusRaw,
+        row.paymentStatus,
+        row.orderStatus,
+      ),
     }));
     const totalInvoiced = allInvoices.reduce((sum, item) => sum + item.amount, 0);
     const paid = allInvoices
-      .filter(item => item.status === 'Paid')
+      .filter(item => item.status === 'Paid' || item.status === 'Completed')
       .reduce((sum, item) => sum + item.amount, 0);
     const pending = allInvoices
       .filter(item => item.status === 'Pending')
@@ -469,17 +612,101 @@ export function useRentalOrdersController(): RentalOrdersController {
     navigation.goBack();
   }, [navigation]);
 
-  const onExportPress = useCallback(() => {}, []);
+  const exportTextFile = useCallback(
+    async (filename: string, mimeType: string, content: string) => {
+      const url = `data:${mimeType};charset=utf-8,${encodeURIComponent(content)}`;
+      try {
+        await Linking.openURL(url);
+        showMessage({message: `${filename} exported`, type: 'success'});
+      } catch {
+        showMessage({
+          message: 'Export failed on this device',
+          type: 'danger',
+        });
+      }
+    },
+    [],
+  );
+
+  const onExportPress = useCallback(() => {
+    const escapeCsv = (v: unknown) => {
+      const s = String(v ?? '');
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+
+    const header = [
+      'order_id',
+      'customer',
+      'amount',
+      'payment',
+      'status',
+    ].join(',');
+
+    const lines = orders.map(o =>
+      [
+        escapeCsv(o.orderId),
+        escapeCsv(o.customer),
+        escapeCsv(o.amount),
+        escapeCsv(o.payment),
+        escapeCsv(o.status),
+      ].join(','),
+    );
+
+    const csv = [header, ...lines].join('\n');
+    void exportTextFile('rental_orders.csv', 'text/csv', csv);
+  }, [exportTextFile, orders]);
+
   const onExportPdfPress = useCallback(() => {
     setIsExportPdfModalVisible(true);
   }, []);
   const onCloseExportPdfModal = useCallback(() => {
     setIsExportPdfModalVisible(false);
   }, []);
-  const onConfirmExportPdf = useCallback(() => {
-    setIsExportPdfModalVisible(false);
+  const onConfirmExportPdf = useCallback(
+    (format?: string) => {
+      setIsExportPdfModalVisible(false);
+
+      const escapeCsv = (v: unknown) => {
+        const s = String(v ?? '');
+        return `"${s.replace(/"/g, '""')}"`;
+      };
+
+      if (format === 'csv' || format === 'excel') {
+        const header = ['invoice_id', 'customer', 'amount', 'due', 'status'].join(',');
+        const lines = invoices.map(inv =>
+          [
+            escapeCsv(inv.invoiceId),
+            escapeCsv(inv.customer),
+            escapeCsv(inv.amount),
+            escapeCsv(inv.due),
+            escapeCsv(inv.status),
+          ].join(','),
+        );
+        const csv = [header, ...lines].join('\n');
+        void exportTextFile('rental_invoices.csv', 'text/csv', csv);
+        return;
+      }
+
+      // PDF not generated in-app; export a printable text snapshot instead.
+      const text = [
+        'Rental Invoices Export',
+        `Generated: ${new Date().toISOString()}`,
+        '',
+        ...invoices.map(
+          inv =>
+            `${inv.invoiceId} | ${inv.customer} | Amount: ${inv.amount} | Due: ${inv.due} | Status: ${inv.status}`,
+        ),
+      ].join('\n');
+      void exportTextFile('rental_invoices.txt', 'text/plain', text);
+    },
+    [exportTextFile, invoices],
+  );
+  const onPrintPress = useCallback(() => {
+    Alert.alert(
+      'Print',
+      'Print preview generation is not implemented yet. Use Export PDF/Export CSV instead.',
+    );
   }, []);
-  const onPrintPress = useCallback(() => {}, []);
   const onCreateInvoicePress = useCallback(() => {
     setIsCreateInvoiceModalVisible(true);
   }, []);
@@ -498,8 +725,32 @@ export function useRentalOrdersController(): RentalOrdersController {
   const onConfirmSendReminders = useCallback(() => {
     setIsSendRemindersModalVisible(false);
   }, []);
-  const onStatusFilterPress = useCallback(() => {}, []);
-  const onDateFilterPress = useCallback(() => {}, []);
+  const onStatusFilterPress = useCallback(() => {
+    Alert.alert(
+      'Filter by status',
+      'Choose order status',
+      [
+        {text: 'All', onPress: () => setStatusFilter('All')},
+        {text: 'Active', onPress: () => setStatusFilter('Active')},
+        {text: 'Overdue', onPress: () => setStatusFilter('Overdue')},
+        {text: 'Reserved', onPress: () => setStatusFilter('Reserved')},
+        {text: 'Completed', onPress: () => setStatusFilter('Completed')},
+        {text: 'Cancelled', onPress: () => setStatusFilter('Cancelled')},
+      ],
+      {cancelable: true},
+    );
+  }, []);
+
+  const onDateFilterPress = useCallback(() => {
+    setIsDateRangeModalVisible(true);
+  }, []);
+  const onCloseDateRangeModal = useCallback(() => {
+    setIsDateRangeModalVisible(false);
+  }, []);
+  const onSelectDateRange = useCallback((preset: DateRangePreset) => {
+    setDateRangePreset(preset);
+    setIsDateRangeModalVisible(false);
+  }, []);
 
   const onOrderPress = useCallback(
     (orderId: string) => {
@@ -529,7 +780,17 @@ export function useRentalOrdersController(): RentalOrdersController {
   );
 
   const onCallPress = useCallback((_id: string) => {}, []);
-  const onEmailPress = useCallback((_id: string) => {}, []);
+  const onEmailPress = useCallback((id: string) => {
+    Alert.alert('Email to customer', 'Do you want to send an email?', [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'Send',
+        onPress: () => {
+          showMessage({message: `Email queued for ${id}`, type: 'success'});
+        },
+      },
+    ]);
+  }, []);
   const onChargeFeePress = useCallback(
     (id: string) => {
       navigation.navigate('ReturnVehicle', {rentalId: id});
@@ -546,7 +807,10 @@ export function useRentalOrdersController(): RentalOrdersController {
     invoicesSummary,
     searchQuery,
     invoiceSearchQuery,
-    showingLabel: `Showing ${orders.length} of ${totalCount}`,
+    showingLabel:
+      dateRangePreset === 'all'
+        ? `Showing ${orders.length} results`
+        : `Showing ${orders.length} results · ${DATE_RANGE_LABEL[dateRangePreset]}`,
     orders,
     lateReturns,
     invoiceMetrics,
@@ -573,7 +837,11 @@ export function useRentalOrdersController(): RentalOrdersController {
     onCloseSendRemindersModal,
     onConfirmSendReminders,
     onStatusFilterPress,
+    dateRangePreset,
+    isDateRangeModalVisible,
     onDateFilterPress,
+    onCloseDateRangeModal,
+    onSelectDateRange,
     onOrderPress,
     onInvoicePress,
     onViewInvoicePress,

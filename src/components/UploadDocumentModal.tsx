@@ -14,6 +14,7 @@ type UploadDocumentModalProps = {
   visible: boolean;
   submitting?: boolean;
   selectedFileName?: string | null;
+  selectedCount?: number;
   onClose: () => void;
   onUploadPress?: () => void;
   onPickPress?: () => void;
@@ -23,13 +24,19 @@ export const UploadDocumentModal = memo(function UploadDocumentModal({
   visible,
   submitting = false,
   selectedFileName,
+  selectedCount = 0,
   onClose,
   onUploadPress,
   onPickPress,
 }: UploadDocumentModalProps) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
-  const canUpload = Boolean(selectedFileName) && !submitting;
+  const hasSelection = Boolean(selectedFileName) || selectedCount > 0;
+  const canUpload = hasSelection && !submitting;
+  const selectionHint =
+    selectedCount > 1
+      ? `${selectedCount} photos selected`
+      : selectedFileName ?? 'Tap to add photos · multi-select';
 
   return (
     <Modal
@@ -42,7 +49,7 @@ export const UploadDocumentModal = memo(function UploadDocumentModal({
         <View style={styles.card}>
           <Text style={styles.eyebrow}>UPLOAD</Text>
           <Text style={styles.title}>Upload Document</Text>
-          <Text style={styles.subtitle}>Choose documents</Text>
+          <Text style={styles.subtitle}>Choose one or more photos</Text>
 
           <Pressable
             style={styles.dropzone}
@@ -50,13 +57,9 @@ export const UploadDocumentModal = memo(function UploadDocumentModal({
             disabled={submitting}>
             <Icon name="uploadArrow" size={28} color={colors.actionBlue} />
             <Text style={styles.dropTitle}>
-              {selectedFileName ? 'Change file' : 'Upload'}
+              {hasSelection ? 'Add more photos' : 'Upload'}
             </Text>
-            <Text style={styles.dropHint}>
-              {selectedFileName
-                ? selectedFileName
-                : 'Max MB 12 (Upload PDF file)'}
-            </Text>
+            <Text style={styles.dropHint}>{selectionHint}</Text>
           </Pressable>
 
           <View style={styles.divider} />

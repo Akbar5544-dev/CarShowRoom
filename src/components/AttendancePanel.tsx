@@ -113,10 +113,6 @@ export const AttendancePanel = memo(function AttendancePanel({
       </View>
 
       <View style={styles.filterRow}>
-        <View style={styles.filterLeft}>
-          <Icon name="filter" size={14} />
-          <Text style={styles.filterText}>Filter</Text>
-        </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, {backgroundColor: '#46B250'}]} />
           <Text style={styles.legendText}>present · {legend.present}</Text>

@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import {Alert} from 'react-native';
+import {Linking} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {RouteProp} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -70,7 +71,12 @@ function formatWhen(value: string): string {
 
 function statusToneFrom(raw: string): InvoiceStatusTone {
   const key = raw.toLowerCase();
-  if (key.includes('paid') || key.includes('settled')) {
+  if (
+    key.includes('paid') ||
+    key.includes('settled') ||
+    key.includes('complete') ||
+    key.includes('completed')
+  ) {
     return 'paid';
   }
   if (key.includes('overdue') || key.includes('late')) {
@@ -269,26 +275,95 @@ export function useRentalInvoiceController(): RentalInvoiceController {
   }, [navigation]);
 
   const onPrintPress = useCallback(() => {
-    Alert.alert('Print', `Preparing print for ${data.invoiceId}`);
-  }, [data.invoiceId]);
+    const text = [
+      `Invoice ${data.invoiceId}`,
+      `Status: ${data.status}`,
+      '',
+      `Customer: ${data.customerName}`,
+      `Vehicle: ${data.vehicleTitle} (${data.vehiclePlate})`,
+      '',
+      ...data.lineItems.map(li => `- ${li.label}: ${li.amount}`),
+      '',
+      `Subtotal: ${data.subtotal}`,
+      `Tax: ${data.tax}`,
+      `Total due: ${data.totalDue}`,
+    ].join('\n');
+    void Linking.openURL(
+      `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`,
+    );
+    Alert.alert('Print', 'A printable text preview is opened.');
+  }, [data]);
 
   const onMarkPaidPress = useCallback(() => {
-    setData(prev => ({
-      ...prev,
-      status: 'Paid',
-      statusTone: 'paid',
-      paymentStatus: 'Settled',
-    }));
-    showMessage({message: 'Marked as paid', type: 'success'});
-  }, []);
+    Alert.alert(
+      'Mark as paid',
+      'Are you sure you want to mark this invoice as paid?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Confirm',
+          style: 'default',
+          onPress: async () => {
+            try {
+              if (rentalId) {
+                await vehicleRentalRentalsService.updateRentalsById(rentalId, {
+                  status: 'completed',
+                });
+              }
+              setData(prev => ({
+                ...prev,
+                status: 'Complete',
+                statusTone: 'paid',
+                paymentStatus: 'Settled',
+              }));
+              showMessage({message: 'Marked as paid', type: 'success'});
+            } catch (error) {
+              showMessage({
+                message: getApiErrorMessage(error, 'Failed to mark as paid'),
+                type: 'danger',
+              });
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  }, [rentalId]);
 
   const onDownloadPress = useCallback(() => {
-    Alert.alert('Download', `Invoice ${data.invoiceId} saved.`);
-  }, [data.invoiceId]);
+    const text = [
+      `Invoice ${data.invoiceId}`,
+      `Status: ${data.status}`,
+      '',
+      ...data.lineItems.map(li => `${li.label}: ${li.amount}`),
+      '',
+      `Total due: ${data.totalDue}`,
+    ].join('\n');
+    void Linking.openURL(
+      `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`,
+    );
+    Alert.alert('Download', 'Invoice text exported.');
+  }, [data]);
 
   const onEmailPress = useCallback(() => {
-    Alert.alert('Email', `Invoice emailed to ${data.customerEmail}`);
-  }, [data.customerEmail]);
+    Alert.alert(
+      'Email to customer',
+      `Send invoice to ${data.customerEmail}?`,
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Send',
+          onPress: () => {
+            showMessage({
+              message: `Email queued for ${data.customerEmail}`,
+              type: 'success',
+            });
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  }, [data.customerEmail, showMessage]);
 
   return {
     isLoading,

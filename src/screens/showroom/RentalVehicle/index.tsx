@@ -1,10 +1,7 @@
 import React from 'react';
-import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, Pressable, Text, View} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
-  FormDateField,
-  FormField,
-  FormRow,
   Icon,
   RentalVehicleSummaryCard,
   RentalWizardStepper,
@@ -12,7 +9,7 @@ import {
 } from '../../../components';
 import {useThemedStyles, useThemeColors} from '../../../theme';
 import {createStyles} from './styles';
-import {customerTierStyle, useRentalVehicleController} from './useController';
+import {useRentalVehicleController} from './useController';
 
 export function RentalVehicle() {
   const colors = useThemeColors();
@@ -23,8 +20,6 @@ export function RentalVehicle() {
     steps,
     stepTitle,
     stepDescription,
-    form,
-    customerSearch,
     filteredCustomers,
     selectedCustomerId,
     addons,
@@ -32,8 +27,6 @@ export function RentalVehicle() {
     selectedAddons,
     insuranceOptions,
     selectedInsuranceId,
-    paymentMethods,
-    selectedPaymentMethodId,
     durationDays,
     baseRentalTotal,
     addonsTotal,
@@ -44,12 +37,8 @@ export function RentalVehicle() {
     vehicleYear,
     canGoPrevious,
     isLastStep,
-    setCustomerSearch,
-    setField,
-    onSelectCustomer,
     onToggleAddon,
     onSelectInsurance,
-    onSelectPaymentMethod,
     onBackPress,
     onPreviousPress,
     onNextPress,
@@ -84,7 +73,7 @@ export function RentalVehicle() {
           <View style={styles.card}>
             <View style={styles.formPanel}>
               <Text style={styles.stepEyebrow}>
-                STEP {currentStep + 1} OF 6
+                STEP {currentStep + 1} OF 3
               </Text>
               <Text style={styles.stepTitle}>{stepTitle}</Text>
               {stepDescription ? (
@@ -92,97 +81,6 @@ export function RentalVehicle() {
               ) : null}
 
               {currentStep === 0 ? (
-                <View style={styles.customerList}>
-                  <View style={styles.search}>
-                    <Icon name="search" size={12} />
-                    <TextInput
-                      value={customerSearch}
-                      onChangeText={setCustomerSearch}
-                      placeholder="Search name or ID..."
-                      placeholderTextColor={colors.textSoft}
-                      style={styles.searchInput}
-                      returnKeyType="search"
-                    />
-                  </View>
-
-                  {filteredCustomers.map(customer => {
-                    const selected = customer.id === selectedCustomerId;
-                    const tier = customerTierStyle(customer.tier);
-                    return (
-                      <Pressable
-                        key={customer.id}
-                        style={[
-                          styles.customerCard,
-                          selected && styles.customerCardSelected,
-                        ]}
-                        onPress={() => onSelectCustomer(customer.id)}>
-                        <View style={styles.customerTop}>
-                          <Text style={styles.customerCode}>{customer.code}</Text>
-                          <View
-                            style={[
-                              styles.tierBadge,
-                              {backgroundColor: tier.bg},
-                            ]}>
-                            <Text style={[styles.tierText, {color: tier.color}]}>
-                              {customer.tier}
-                            </Text>
-                          </View>
-                        </View>
-                        <Text style={styles.customerName}>{customer.name}</Text>
-                        <Text style={styles.customerMeta} numberOfLines={1}>
-                          {customer.phone} · {customer.licenseInfo}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ) : null}
-
-              {currentStep === 1 ? (
-                <View style={styles.customerList}>
-                  <FormRow>
-                    <FormDateField
-                      label="Pickup date & time"
-                      value={form.pickupDateTime}
-                      onChangeText={text => setField('pickupDateTime', text)}
-                      placeholder="mm/dd/yyyy, hh:mm AM"
-                      includeTime
-                    />
-                    <FormDateField
-                      label="Return date & time"
-                      value={form.returnDateTime}
-                      onChangeText={text => setField('returnDateTime', text)}
-                      placeholder="mm/dd/yyyy, hh:mm AM"
-                      includeTime
-                    />
-                  </FormRow>
-                  <FormField
-                    label="Pickup location"
-                    value={form.pickupLocation}
-                    onChangeText={text => setField('pickupLocation', text)}
-                    placeholder="Lahore Airport - Terminal 1"
-                    fullWidth
-                  />
-                  <FormField
-                    label="Drop-off location"
-                    value={form.dropoffLocation}
-                    onChangeText={text => setField('dropoffLocation', text)}
-                    placeholder="DHA Phase 5 - Branch"
-                    fullWidth
-                  />
-                  <View style={styles.durationBox}>
-                    <View>
-                      <Text style={styles.durationLabel}>DURATION</Text>
-                      <Text style={styles.durationValue}>{durationDays} days</Text>
-                    </View>
-                    <Text style={styles.durationPrice}>
-                      Base rental · {baseRentalTotal}
-                    </Text>
-                  </View>
-                </View>
-              ) : null}
-
-              {currentStep === 2 ? (
                 <View style={styles.customerList}>
                   {addons.map(addon => {
                     const selected = selectedAddonIds.includes(addon.id);
@@ -222,7 +120,7 @@ export function RentalVehicle() {
                 </View>
               ) : null}
 
-              {currentStep === 3 ? (
+              {currentStep === 1 ? (
                 <View style={styles.customerList}>
                   {insuranceOptions.map(option => {
                     const selected = option.id === selectedInsuranceId;
@@ -247,7 +145,9 @@ export function RentalVehicle() {
                             ]}>
                             {selected ? <View style={styles.radioDot} /> : null}
                           </View>
-                          <Text style={styles.insuranceTitle}>{option.title}</Text>
+                          <Text style={styles.insuranceTitle}>
+                            {option.title}
+                          </Text>
                         </View>
                         <Text style={styles.insuranceDescription}>
                           {option.description}
@@ -261,71 +161,7 @@ export function RentalVehicle() {
                 </View>
               ) : null}
 
-              {currentStep === 4 ? (
-                <View style={styles.customerList}>
-                  {paymentMethods.map(method => {
-                    const selected = method.id === selectedPaymentMethodId;
-                    return (
-                      <Pressable
-                        key={method.id}
-                        style={[
-                          styles.paymentMethodCard,
-                          selected && styles.paymentMethodCardSelected,
-                        ]}
-                        onPress={() => onSelectPaymentMethod(method.id)}>
-                        <Icon name={method.icon} size={14} />
-                        <Text style={styles.paymentMethodLabel}>
-                          {method.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-
-                  {selectedPaymentMethodId === 'card' ? (
-                    <View style={styles.paymentFields}>
-                      <FormRow>
-                        <FormField
-                          label="Card number"
-                          value={form.cardNumber}
-                          onChangeText={text => setField('cardNumber', text)}
-                          placeholder="•••• •••• •••• 4242"
-                        />
-                        <FormField
-                          label="Cardholder"
-                          value={form.cardholder}
-                          onChangeText={text => setField('cardholder', text)}
-                          placeholder="Ayesha Khan"
-                        />
-                      </FormRow>
-                      <FormRow>
-                        <FormField
-                          label="Expiry"
-                          value={form.cardExpiry}
-                          onChangeText={text => setField('cardExpiry', text)}
-                          placeholder="MM / YY"
-                        />
-                        <FormField
-                          label="CVC"
-                          value={form.cardCvc}
-                          onChangeText={text => setField('cardCvc', text)}
-                          placeholder="•••"
-                          secureTextEntry
-                        />
-                      </FormRow>
-                      <FormField
-                        label="Internal notes"
-                        value={form.internalNotes}
-                        onChangeText={text => setField('internalNotes', text)}
-                        placeholder="Special instructions, ID checks..."
-                        multiline
-                        fullWidth
-                      />
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
-
-              {currentStep === 5 ? (
+              {currentStep === 2 ? (
                 <View style={styles.customerList}>
                   <View style={styles.reviewGrid}>
                     {reviewFields.map(field => (
@@ -336,8 +172,8 @@ export function RentalVehicle() {
                     ))}
                   </View>
                   <Text style={styles.disclaimer}>
-                    By confirming, the customer accepts the rental agreement and
-                    authorizes a security hold on the selected payment method.
+                    By confirming, you finalize this rental booking for the
+                    selected vehicle.
                   </Text>
                 </View>
               ) : null}
@@ -375,7 +211,7 @@ export function RentalVehicle() {
             </View>
           </View>
 
-          {currentStep === 5 ? (
+          {currentStep === 2 ? (
             <>
               <View style={styles.sectionCard}>
                 <Text style={styles.sectionEyebrow}>Rental Summary</Text>

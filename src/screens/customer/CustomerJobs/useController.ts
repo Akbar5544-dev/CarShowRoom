@@ -11,14 +11,12 @@ import {
   mapPublicJobListItem,
   type PublicJobListItem,
 } from '../../../utils/publicJobs';
-import type {CustomerJobsController} from './module';
-
 type Nav = NativeStackNavigationProp<
   CustomerJobsStackParamList,
   'CustomerJobsList'
 >;
 
-export function useCustomerJobsController(): CustomerJobsController {
+export function useCustomerJobsController() {
   const navigation = useNavigation<Nav>();
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');

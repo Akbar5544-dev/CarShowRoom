@@ -38,6 +38,8 @@ export type VehicleInventoryItem = {
 type VehicleInventoryCardProps = {
   item: VehicleInventoryItem;
   onViewPress?: (item: VehicleInventoryItem) => void;
+  onPostPress?: (item: VehicleInventoryItem) => void;
+  onAuctionPress?: (item: VehicleInventoryItem) => void;
   onItemPress?: (item: VehicleInventoryItem) => void;
 };
 
@@ -49,6 +51,8 @@ type SpecItem = {
 export const VehicleInventoryCard = memo(function VehicleInventoryCard({
   item,
   onViewPress,
+  onPostPress,
+  onAuctionPress,
   onItemPress,
 }: VehicleInventoryCardProps) {
   const colors = useThemeColors();
@@ -68,8 +72,7 @@ export const VehicleInventoryCard = memo(function VehicleInventoryCard({
   return (
     <View style={styles.card}>
       <View style={[styles.imageWrap, {backgroundColor: item.imageTint}]}>
-        <View
-          style={[styles.statusBadge, {backgroundColor: item.statusBg}]}>
+        <View style={[styles.statusBadge, {backgroundColor: item.statusBg}]}>
           <Text style={[styles.statusText, {color: item.statusColor}]}>
             {item.status}
           </Text>
@@ -81,22 +84,14 @@ export const VehicleInventoryCard = memo(function VehicleInventoryCard({
       </View>
 
       <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <View style={styles.titleBlock}>
-            <Text style={styles.makeYear} numberOfLines={1}>
-              {item.make}
-              {item.year ? ` · ${item.year}` : ''}
-            </Text>
-            <Text style={styles.model} numberOfLines={1}>
-              {item.model}
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => onViewPress?.(item)}
-            hitSlop={8}
-            style={styles.viewBtn}>
-            <Text style={styles.viewLink}>View</Text>
-          </Pressable>
+        <View style={styles.titleBlock}>
+          <Text style={styles.makeYear} numberOfLines={1}>
+            {item.make}
+            {item.year ? ` · ${item.year}` : ''}
+          </Text>
+          <Text style={styles.model} numberOfLines={1}>
+            {item.model}
+          </Text>
         </View>
 
         <View style={styles.specsRow}>
@@ -110,18 +105,37 @@ export const VehicleInventoryCard = memo(function VehicleInventoryCard({
           ))}
         </View>
 
-        <View style={styles.footer}>
-          <View>
-            <Text style={styles.rentalLabel}>RENTAL</Text>
-            <Text style={styles.rentalPrice}>
-              {item.dailyRate}
-              <Text style={styles.rentalSuffix}>/day</Text>
-            </Text>
-          </View>
+        <View style={styles.priceRow}>
+          <Text style={styles.rentalLabel}>RENTAL</Text>
+          <Text style={styles.rentalPrice}>
+            {item.dailyRate}
+            <Text style={styles.rentalSuffix}>/day</Text>
+          </Text>
+        </View>
+
+        <View style={styles.actionsRow}>
           <Pressable
-            style={styles.rentBtn}
+            style={styles.actionBtn}
+            onPress={() => onViewPress?.(item)}
+            hitSlop={4}>
+            <Text style={styles.actionBtnText}>View</Text>
+          </Pressable>
+          <Pressable
+            style={styles.actionBtn}
+            onPress={() => onPostPress?.(item)}
+            hitSlop={4}>
+            <Text style={styles.actionBtnText}>Post</Text>
+          </Pressable>
+          <Pressable
+            style={styles.actionBtn}
+            onPress={() => onAuctionPress?.(item)}
+            hitSlop={4}>
+            <Text style={styles.actionBtnText}>Auction</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.actionBtn, styles.rentBtn]}
             onPress={() => onItemPress?.(item)}
-            hitSlop={6}>
+            hitSlop={4}>
             <Text style={styles.rentBtnText}>Rent</Text>
             <Icon name="profileArrow" size={9} color={colors.white} />
           </Pressable>
@@ -192,16 +206,9 @@ function createStyles(c: AppColors) {
       paddingHorizontal: 16,
       paddingTop: 14,
       paddingBottom: 16,
-      gap: 14,
-    },
-    titleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 10,
+      gap: 12,
     },
     titleBlock: {
-      flex: 1,
       gap: 3,
     },
     makeYear: {
@@ -215,14 +222,6 @@ function createStyles(c: AppColors) {
       color: c.textDark,
       letterSpacing: -0.4,
       lineHeight: 20,
-    },
-    viewBtn: {
-      paddingTop: 2,
-    },
-    viewLink: {
-      fontSize: 10.5,
-      fontWeight: '600',
-      color: c.actionBlue,
     },
     specsRow: {
       flexDirection: 'row',
@@ -248,17 +247,14 @@ function createStyles(c: AppColors) {
       color: c.textDark,
       flexShrink: 1,
     },
-    footer: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      justifyContent: 'space-between',
+    priceRow: {
+      gap: 2,
     },
     rentalLabel: {
       fontSize: 8.5,
       fontWeight: '700',
       color: c.textSoft,
       letterSpacing: 0.6,
-      marginBottom: 2,
     },
     rentalPrice: {
       fontSize: 18,
@@ -271,13 +267,31 @@ function createStyles(c: AppColors) {
       fontWeight: '600',
       color: c.actionBlue,
     },
-    rentBtn: {
+    actionsRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 5,
-      height: 32,
-      paddingHorizontal: 14,
+      gap: 6,
+    },
+    actionBtn: {
+      flex: 1,
+      height: 34,
       borderRadius: 999,
+      borderWidth: 0.75,
+      borderColor: c.border,
+      backgroundColor: c.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    actionBtnText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.textDark,
+    },
+    rentBtn: {
+      flexDirection: 'row',
+      gap: 4,
+      borderColor: c.actionBlue,
       backgroundColor: c.actionBlue,
     },
     rentBtnText: {

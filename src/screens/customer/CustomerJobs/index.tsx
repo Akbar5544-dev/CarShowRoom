@@ -1,164 +1,194 @@
-import React from 'react';
+import React, {useMemo, useState} from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
-  RefreshControl,
-  ScrollView,
+  StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import {Icon, Screen} from '../../../components';
-import {useThemedStyles, useThemeColors} from '../../../theme';
-import {createStyles} from './styles';
+import {
+  CustomerChips,
+  CustomerListHeader,
+  InitialsAvatar,
+} from '../shared/CustomerListHeader';
+import {C} from '../shared/tokens';
+import type {PublicJobListItem} from '../../../utils/publicJobs';
+import {JOB_CHIPS} from './module';
 import {useCustomerJobsController} from './useController';
 
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+  }
+  return (parts[0] || 'JB').slice(0, 2).toUpperCase();
+}
+
 export function CustomerJobs() {
-  const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const {
     isLoading,
     search,
-    jobs,
-    departmentOptions,
-    cityOptions,
-    selectedDepartment,
-    selectedCity,
-    emptyMessage,
     setSearch,
-    setSelectedDepartment,
-    setSelectedCity,
-    onRefresh,
+    jobs,
     onJobPress,
+    emptyMessage,
   } = useCustomerJobsController();
+  const [chip, setChip] = useState('All');
 
-  return (
-    <Screen style={styles.container}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Jobs</Text>
-          <Text style={styles.subtitle}>
-            Browse open roles from showrooms and apply in a few taps.
+  const data = useMemo(() => {
+    return jobs.filter(j => {
+      if (chip === 'Full-time' && !j.employmentType.toLowerCase().includes('full')) {
+        return false;
+      }
+      if (chip === 'Part-time' && !j.employmentType.toLowerCase().includes('part')) {
+        return false;
+      }
+      if (
+        chip === 'Sales' &&
+        !j.department.toLowerCase().includes('sales') &&
+        !j.title.toLowerCase().includes('sales')
+      ) {
+        return false;
+      }
+      if (
+        chip === 'Mechanic' &&
+        !j.department.toLowerCase().includes('mechanic') &&
+        !j.title.toLowerCase().includes('mechanic')
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [chip, jobs]);
+
+  const renderItem = ({item}: {item: PublicJobListItem}) => (
+    <View style={styles.card}>
+      <View style={styles.top}>
+        <InitialsAvatar
+          initials={initials(item.showroomName || item.title)}
+          tone="cc"
+          size={44}
+          radius={11}
+        />
+        <View style={{flex: 1, minWidth: 0}}>
+          <Text style={styles.title}>{item.title}</Text>
+          <View style={styles.companyRow}>
+            <Text style={styles.company}>{item.showroomName}</Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.tags}>
+        <View style={[styles.tag, styles.tagRole]}>
+          <Text style={[styles.tagText, styles.tagRoleText]}>
+            {item.department}
           </Text>
         </View>
-
-        <View style={styles.searchWrap}>
-          <Icon name="search" size={16} color={colors.textSoft} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search roles, departments…"
-            placeholderTextColor={colors.textSoft}
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-          />
+        <View style={[styles.tag, styles.tagType]}>
+          <Text style={[styles.tagText, styles.tagTypeText]}>
+            {item.employmentType}
+          </Text>
         </View>
+        <View style={[styles.tag, styles.tagPay]}>
+          <Text style={[styles.tagText, styles.tagPayText]}>
+            {item.salaryLabel}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.desc} numberOfLines={2}>
+        {item.city}
+        {item.experienceLabel ? ` · ${item.experienceLabel}` : ''}
+      </Text>
+      <View style={styles.foot}>
+        <Text style={styles.footMeta}>{item.postedLabel || 'Open role'}</Text>
+        <Pressable style={styles.apply} onPress={() => onJobPress(item)}>
+          <Text style={styles.applyText}>Apply</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
 
-        {departmentOptions.length > 0 || cityOptions.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filtersRow}>
-            <Pressable
-              style={[styles.chip, !selectedDepartment && styles.chipActive]}
-              onPress={() => setSelectedDepartment(null)}>
-              <Text
-                style={[
-                  styles.chipText,
-                  !selectedDepartment && styles.chipTextActive,
-                ]}>
-                All departments
-              </Text>
-            </Pressable>
-            {departmentOptions.map(item => {
-              const active = selectedDepartment === item;
-              return (
-                <Pressable
-                  key={item}
-                  style={[styles.chip, active && styles.chipActive]}
-                  onPress={() =>
-                    setSelectedDepartment(active ? null : item)
-                  }>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      active && styles.chipTextActive,
-                    ]}>
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            })}
-            {cityOptions.map(item => {
-              const active = selectedCity === item;
-              return (
-                <Pressable
-                  key={`city-${item}`}
-                  style={[styles.chip, active && styles.chipActive]}
-                  onPress={() => setSelectedCity(active ? null : item)}>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      active && styles.chipTextActive,
-                    ]}>
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        ) : null}
-
-        {isLoading && jobs.length === 0 ? (
-          <ActivityIndicator
-            style={styles.loader}
-            color={colors.actionBlue}
-          />
-        ) : jobs.length === 0 ? (
+  return (
+    <Screen style={styles.container} edges={['top', 'left', 'right']}>
+      <CustomerListHeader
+        search={search}
+        onChangeSearch={setSearch}
+        placeholder="Search jobs..."
+      />
+      <Text style={styles.pageTitle}>Jobs</Text>
+      <CustomerChips chips={JOB_CHIPS} active={chip} onSelect={setChip} />
+      <FlatList
+        data={data}
+        keyExtractor={i => i.id}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyTitle}>No openings found</Text>
-            <Text style={styles.emptyText}>{emptyMessage}</Text>
+            {isLoading ? (
+              <ActivityIndicator color={C.primary} />
+            ) : (
+              <Text style={styles.empty}>{emptyMessage}</Text>
+            )}
           </View>
-        ) : (
-          jobs.map(job => (
-            <Pressable
-              key={job.id}
-              style={styles.card}
-              onPress={() => onJobPress(job)}>
-              <View style={styles.cardTop}>
-                <Text style={styles.jobTitle}>{job.title}</Text>
-                <View style={styles.typeBadge}>
-                  <Text style={styles.typeBadgeText}>{job.employmentType}</Text>
-                </View>
-              </View>
-              <Text style={styles.meta}>
-                {job.showroomName} · {job.department}
-              </Text>
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItem}>
-                  <Icon name="location" size={12} color={colors.textSoft} />
-                  <Text style={styles.detailText}>{job.city}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Icon name="briefcase" size={12} color={colors.textSoft} />
-                  <Text style={styles.detailText}>{job.experienceLabel}</Text>
-                </View>
-                {job.postedLabel ? (
-                  <Text style={styles.detailText}>{job.postedLabel}</Text>
-                ) : null}
-              </View>
-              <Text style={styles.salary}>{job.salaryLabel}</Text>
-            </Pressable>
-          ))
-        )}
-      </ScrollView>
+        }
+      />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: C.bg},
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.text,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+    backgroundColor: C.white,
+  },
+  list: {padding: 14, gap: 12, paddingBottom: 28, flexGrow: 1},
+  card: {
+    backgroundColor: C.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 13,
+    gap: 10,
+  },
+  top: {flexDirection: 'row', gap: 11, alignItems: 'center'},
+  title: {fontSize: 14, fontWeight: '700', color: C.text},
+  companyRow: {flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2},
+  company: {fontSize: 11, color: C.muted, fontWeight: '600'},
+  tags: {flexDirection: 'row', flexWrap: 'wrap', gap: 6},
+  tag: {paddingHorizontal: 8, paddingVertical: 4, borderRadius: 7},
+  tagText: {fontSize: 10, fontWeight: '700'},
+  tagRole: {backgroundColor: '#fff7ed'},
+  tagRoleText: {color: '#c2410c'},
+  tagType: {backgroundColor: '#eff6ff'},
+  tagTypeText: {color: C.primary},
+  tagPay: {backgroundColor: '#f0fdf4'},
+  tagPayText: {color: C.green},
+  desc: {fontSize: 11, color: C.muted, lineHeight: 15},
+  foot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: C.border,
+    paddingTop: 10,
+    gap: 8,
+  },
+  footMeta: {flex: 1, fontSize: 10, color: C.muted},
+  apply: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 9,
+    backgroundColor: C.primary,
+  },
+  applyText: {color: '#fff', fontSize: 11, fontWeight: '700'},
+  emptyWrap: {paddingTop: 40, alignItems: 'center', paddingHorizontal: 24},
+  empty: {textAlign: 'center', color: C.muted, fontWeight: '600'},
+});

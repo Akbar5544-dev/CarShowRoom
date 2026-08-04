@@ -1,0 +1,160 @@
+import {StyleSheet} from 'react-native';
+import {type AppColors} from '../../../theme';
+import {FEED_BG, FEED_BORDER, FEED_MUTED, FEED_PRIMARY} from './module';
+
+export const createStyles = (_c: AppColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#fff',
+    },
+    topbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingTop: 8,
+      paddingBottom: 12,
+      backgroundColor: '#fff',
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: FEED_BORDER,
+    },
+    backBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      borderWidth: 1,
+      borderColor: FEED_BORDER,
+      backgroundColor: FEED_BG,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '700',
+      color: '#111827',
+    },
+    newBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: '#eff6ff',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    searchWrap: {
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      backgroundColor: '#fff',
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: '#f3f4f6',
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      height: 38,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 12,
+      color: '#111827',
+      padding: 0,
+    },
+    listContent: {
+      paddingBottom: 24,
+      flexGrow: 1,
+    },
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 11,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      backgroundColor: '#fff',
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: FEED_BORDER,
+    },
+    itemUnread: {
+      backgroundColor: '#f8fbff',
+    },
+    avatar: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    avatarText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: '#fff',
+    },
+    onlineDot: {
+      position: 'absolute',
+      right: 1,
+      bottom: 1,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: '#16a34a',
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
+    body: {
+      flex: 1,
+      minWidth: 0,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    name: {
+      flex: 1,
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#111827',
+    },
+    time: {
+      fontSize: 10,
+      color: FEED_MUTED,
+    },
+    preview: {
+      flex: 1,
+      fontSize: 11,
+      color: FEED_MUTED,
+      marginTop: 3,
+    },
+    previewUnread: {
+      color: '#374151',
+      fontWeight: '500',
+    },
+    badge: {
+      minWidth: 18,
+      height: 18,
+      paddingHorizontal: 5,
+      borderRadius: 9,
+      backgroundColor: FEED_PRIMARY,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeText: {
+      fontSize: 9,
+      fontWeight: '700',
+      color: '#fff',
+    },
+    empty: {
+      paddingTop: 48,
+      alignItems: 'center',
+    },
+    emptyText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: FEED_MUTED,
+    },
+  });

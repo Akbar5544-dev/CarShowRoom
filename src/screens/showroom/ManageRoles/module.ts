@@ -14,6 +14,5 @@ export type ManageRolesController = {
   roles: ManageRoleItem[];
   onBackPress: () => void;
   onCreateRolePress: () => void;
-  onRoleMorePress: (roleId: string) => void;
   onManageRolePress: (roleId: string) => void;
 };

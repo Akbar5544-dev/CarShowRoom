@@ -81,6 +81,7 @@ export function VehicleDetail() {
     isCalendarPickerVisible,
     isUploadModalVisible,
     uploadFileName,
+    uploadCount,
     isUploadSubmitting,
     setActiveTab,
     onBackPress,
@@ -90,8 +91,7 @@ export function VehicleDetail() {
     onCloseUploadModal,
     onPickUploadDocument,
     onConfirmUploadPress,
-    onNewRentalPress,
-    onNewServicePress,
+    onActivityPress,
     onPrevCalendarMonth,
     onNextCalendarMonth,
     onOpenCalendarPicker,
@@ -113,99 +113,132 @@ export function VehicleDetail() {
             activities={activities}
             quickStats={quickStats}
             purchaseSummary={purchaseSummary}
+            onActivityPress={onActivityPress}
           />
         );
 
       case 'maintenance':
         return (
           <>
-            <View style={styles.statsList}>
+            <PanelHeader
+              eyebrow="Service"
+              title="Maintenance"
+              subtitle="Service records for this vehicle"
+            />
+            <View style={styles.statGrid}>
               {maintenanceStats.map(stat => (
-                <View key={stat.label} style={styles.statCard}>
+                <View key={stat.label} style={styles.compactStatCard}>
                   <View
                     style={[
-                      styles.statIconWrap,
+                      styles.compactStatIcon,
                       {backgroundColor: TONE_MAP[stat.tone].bg},
                     ]}>
-                    <Icon name={stat.icon} size={13} color={TONE_MAP[stat.tone].color} />
+                    <Icon name={stat.icon} size={12} color={TONE_MAP[stat.tone].color} />
                   </View>
-                  <View style={styles.statCopy}>
-                    <Text style={styles.statLabel}>{stat.label.toUpperCase()}</Text>
-                    <Text style={styles.statValue}>{stat.value}</Text>
-                  </View>
+                  <Text style={styles.compactStatLabel} numberOfLines={1}>
+                    {stat.label.toUpperCase()}
+                  </Text>
+                  <Text style={styles.compactStatValue} numberOfLines={1}>
+                    {stat.value}
+                  </Text>
                 </View>
               ))}
             </View>
-            <View style={styles.tableHeader}>
-              {['Date', 'Type', 'Garage', 'Odometer', 'Cost', 'Status'].map(h => (
-                <Text key={h} style={styles.tableHeaderText}>{h}</Text>
-              ))}
-            </View>
-            {maintenanceRows.map(row => (
-              <View key={row.id} style={styles.tableRow}>
-                <Text style={styles.tableCell}>{row.date}</Text>
-                <Text style={styles.tableCell}>{row.type}</Text>
-                <Text style={styles.tableCell}>{row.garage}</Text>
-                <Text style={styles.tableCell}>{row.odometer}</Text>
-                <Text style={styles.tableCell}>{row.cost}</Text>
-                <View style={styles.statusPill}>
-                  <Text style={styles.statusPillText}>Completed</Text>
+            <ScrollView
+              style={styles.maintenanceScroll}
+              contentContainerStyle={styles.maintenanceScrollContent}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}>
+              {maintenanceRows.map(row => (
+                <View key={row.id} style={styles.maintenanceCard}>
+                  <View style={styles.maintenanceCardTop}>
+                    <View style={styles.maintenanceCardCopy}>
+                      <Text style={styles.maintenanceType}>{row.type}</Text>
+                      <Text style={styles.maintenanceDate}>{row.date}</Text>
+                    </View>
+                    <View style={styles.statusPill}>
+                      <Text style={styles.statusPillText}>Completed</Text>
+                    </View>
+                  </View>
+                  <View style={styles.maintenanceMetaRow}>
+                    <View style={styles.maintenanceMetaItem}>
+                      <Text style={styles.maintenanceMetaLabel}>Garage</Text>
+                      <Text style={styles.maintenanceMetaValue} numberOfLines={1}>
+                        {row.garage}
+                      </Text>
+                    </View>
+                    <View style={styles.maintenanceMetaItem}>
+                      <Text style={styles.maintenanceMetaLabel}>Odometer</Text>
+                      <Text style={styles.maintenanceMetaValue} numberOfLines={1}>
+                        {row.odometer}
+                      </Text>
+                    </View>
+                    <View style={styles.maintenanceMetaItem}>
+                      <Text style={styles.maintenanceMetaLabel}>Cost</Text>
+                      <Text style={styles.maintenanceCost}>{row.cost}</Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))}
+            </ScrollView>
           </>
         );
 
       case 'rental-history':
         return (
           <>
-            <View style={styles.panelActions}>
-              <Pressable style={styles.primaryChipBtn} onPress={onNewRentalPress}>
-                <Icon name="addPlus" size={10} color={colors.white} />
-                <Text style={styles.primaryChipText}>New Rental</Text>
-              </Pressable>
-            </View>
-            <View style={styles.statsList}>
+            <PanelHeader
+              eyebrow="Rentals"
+              title="Rental History"
+              subtitle="Everyone who has rented this vehicle"
+            />
+            <View style={styles.statGrid}>
               {rentalStats.map(stat => (
-                <View key={stat.label} style={styles.statCard}>
+                <View key={stat.label} style={styles.compactStatCard}>
                   <View
                     style={[
-                      styles.statIconWrap,
+                      styles.compactStatIcon,
                       {backgroundColor: TONE_MAP[stat.tone].bg},
                     ]}>
-                    <Icon name={stat.icon} size={13} color={TONE_MAP[stat.tone].color} />
+                    <Icon name={stat.icon} size={12} color={TONE_MAP[stat.tone].color} />
                   </View>
-                  <View style={styles.statCopy}>
-                    <Text style={styles.statLabel}>{stat.label.toUpperCase()}</Text>
-                    <Text style={styles.statValue}>{stat.value}</Text>
-                  </View>
+                  <Text style={styles.compactStatLabel} numberOfLines={1}>
+                    {stat.label.toUpperCase()}
+                  </Text>
+                  <Text style={styles.compactStatValue} numberOfLines={1}>
+                    {stat.value}
+                  </Text>
                 </View>
               ))}
             </View>
-            <View style={styles.tableHeader}>
-              {['Start', 'End', 'Days'].map(h => (
-                <Text key={h} style={styles.tableHeaderText}>{h}</Text>
+            <ScrollView
+              style={styles.maintenanceScroll}
+              contentContainerStyle={styles.maintenanceScrollContent}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}>
+              {rentalRows.map(row => (
+                <View key={row.id} style={styles.rentalHistoryCard}>
+                  <Text style={styles.rentalCustomer}>{row.customer}</Text>
+                  <View style={styles.rentalHistoryMeta}>
+                    <Text style={styles.rentalHistoryMetaText}>
+                      {row.start} → {row.end}
+                    </Text>
+                    <Text style={styles.rentalDays}>{row.days} days</Text>
+                  </View>
+                </View>
               ))}
-            </View>
-            {rentalRows.map(row => (
-              <View key={row.id} style={styles.tableRow}>
-                <Text style={styles.tableCell}>{row.start}</Text>
-                <Text style={styles.tableCell}>{row.end}</Text>
-                <Text style={styles.tableCell}>{row.days}</Text>
-              </View>
-            ))}
+            </ScrollView>
           </>
         );
 
       case 'documents':
         return (
           <>
-            <View style={styles.panelActions}>
-              <Pressable style={styles.primaryChipBtn} onPress={onUploadDocumentPress}>
-                <Icon name="uploadArrow" size={10} color={colors.white} />
-                <Text style={styles.primaryChipText}>Upload</Text>
-              </Pressable>
-            </View>
+            <PanelHeader
+              eyebrow="Files"
+              title="Documents"
+              subtitle="Vehicle registration and related files"
+            />
             {documents.map(doc => (
               <View key={doc.id} style={styles.docCard}>
                 <Icon name="documentFile" size={16} />
@@ -277,12 +310,11 @@ export function VehicleDetail() {
       case 'service-history':
         return (
           <>
-            <View style={styles.panelActions}>
-              <Pressable style={styles.primaryChipBtn} onPress={onNewServicePress}>
-                <Icon name="addPlus" size={10} color={colors.white} />
-                <Text style={styles.primaryChipText}>New Service</Text>
-              </Pressable>
-            </View>
+            <PanelHeader
+              eyebrow="Workshop"
+              title="Service History"
+              subtitle="Past workshop and software services"
+            />
             {serviceItems.map(item => (
               <View key={item.id} style={styles.serviceCard}>
                 <View style={styles.serviceTop}>
@@ -394,6 +426,7 @@ export function VehicleDetail() {
         visible={isUploadModalVisible}
         submitting={isUploadSubmitting}
         selectedFileName={uploadFileName}
+        selectedCount={uploadCount}
         onClose={onCloseUploadModal}
         onPickPress={onPickUploadDocument}
         onUploadPress={onConfirmUploadPress}

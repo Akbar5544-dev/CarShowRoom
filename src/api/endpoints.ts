@@ -81,39 +81,106 @@ export const endpoints = {
     deleteNotificationsById: (notification: string | number) => `/notifications/${notification}`,
   },
   publicSiteAuth: {
-    register: '/public/auth/register',
-    login: '/public/auth/login',
-    loginWithGoogle: '/public/auth/google',
-    getMe: '/public/auth/me',
-    logout: '/public/auth/logout',
+    register: '/public/register',
+    login: '/public/login',
+    loginWithGoogle: '/public/google',
+    forgotPassword: '/public/forgot-password',
+    verifyResetCode: '/public/verify-reset-code',
+    resetPassword: '/public/reset-password',
+    getMe: '/public/me',
+    logout: '/public/logout',
+    updateProfile: '/public/profile',
+    updateAvatar: '/public/profile/avatar',
+    updateBackground: '/public/profile/background',
+    updateSettings: '/public/settings',
+    changePassword: '/public/change-password',
+  },
+  publicSiteFeed: {
+    listFeed: '/public/feed',
+    listComments: (vehicle: string | number) => `/public/feed/${vehicle}/comments`,
+    like: (vehicle: string | number) => `/public/feed/${vehicle}/like`,
+    unlike: (vehicle: string | number) => `/public/feed/${vehicle}/like`,
+    share: (vehicle: string | number) => `/public/feed/${vehicle}/share`,
+    storeComment: (vehicle: string | number) => `/public/feed/${vehicle}/comments`,
+    destroyComment: (comment: string | number) => `/public/feed/comments/${comment}`,
+    likedVehicles: '/public/liked-vehicles',
+    sharedVehicles: '/public/shared-vehicles',
   },
   publicSiteEnquiries: {
     createPublicEnquiries: '/public/enquiries',
   },
+  publicSiteContact: {
+    createContact: '/public/contact',
+  },
+  publicSiteListingReport: {
+    createReport: '/public/listings/report',
+  },
   publicSiteFollow: {
     listPublicFollows: '/public/follows',
     createPublicFollows: '/public/follows',
-    deletePublicFollowsById: (showroom: string | number) => `/public/follows/${showroom}`,
+    deletePublicFollowsById: (showroom: string | number) =>
+      `/public/follows/${showroom}`,
   },
   publicSiteSavedVehicles: {
     listPublicSavedVehicles: '/public/saved-vehicles',
     createPublicSavedVehicles: '/public/saved-vehicles',
-    deletePublicSavedVehiclesById: (vehicle: string | number) => `/public/saved-vehicles/${vehicle}`,
+    deletePublicSavedVehiclesById: (vehicle: string | number) =>
+      `/public/saved-vehicles/${vehicle}`,
   },
   publicSiteShowrooms: {
     listPublicShowrooms: '/public/showrooms',
     getPublicShowroomsById: (slug: string | number) => `/public/showrooms/${slug}`,
+    listRatings: (showroom: string | number) =>
+      `/public/showrooms/${showroom}/ratings`,
+    storeRating: (showroom: string | number) =>
+      `/public/showrooms/${showroom}/ratings`,
+    myRating: (showroom: string | number) =>
+      `/public/showrooms/${showroom}/ratings/me`,
   },
   publicSiteVehicles: {
     listPublicVehicles: '/public/vehicles',
     getPublicVehiclesFilters: '/public/vehicles/filters',
-    getPublicVehiclesById: (vehicle: string | number) => `/public/vehicles/${vehicle}`,
+    getPublicVehiclesById: (vehicle: string | number) =>
+      `/public/vehicles/${vehicle}`,
+    createTestDrive: (vehicle: string | number) =>
+      `/public/vehicles/${vehicle}/test-drive-requests`,
+  },
+  publicSiteMechanics: {
+    listMechanics: '/public/mechanics',
+    getFilters: '/public/mechanics/filters',
+    getById: (idOrSlug: string | number) => `/public/mechanics/${idOrSlug}`,
+  },
+  publicSiteAuctions: {
+    listAuctions: '/public/auctions',
+    getById: (auction: string | number) => `/public/auctions/${auction}`,
+    listBids: (auction: string | number) => `/public/auctions/${auction}/bids`,
+    watch: (auction: string | number) => `/public/auctions/${auction}/watch`,
+    unwatch: (auction: string | number) => `/public/auctions/${auction}/watch`,
+    placeBid: (auction: string | number) => `/public/auctions/${auction}/bids`,
   },
   publicSiteJobs: {
     listPublicJobs: '/public/jobs',
     getPublicJobsFilters: '/public/jobs/filters',
     getPublicJobsById: (idOrSlug: string | number) => `/public/jobs/${idOrSlug}`,
-    applyPublicJobsById: (idOrSlug: string | number) => `/public/jobs/${idOrSlug}/apply`,
+    applyPublicJobsById: (idOrSlug: string | number) =>
+      `/public/jobs/${idOrSlug}/apply`,
+  },
+  publicSiteMessages: {
+    unreadCount: '/public/messages/unread-count',
+    list: '/public/messages',
+    create: '/public/messages',
+    show: (conversation: string | number) => `/public/messages/${conversation}`,
+    send: (conversation: string | number) =>
+      `/public/messages/${conversation}/send`,
+  },
+  publicSiteNotifications: {
+    unreadCount: '/public/notifications/unread-count',
+    list: '/public/notifications',
+    markAllRead: '/public/notifications/read-all',
+    markRead: (notification: string | number) =>
+      `/public/notifications/${notification}/read`,
+    destroy: (notification: string | number) =>
+      `/public/notifications/${notification}`,
   },
   rolesPermissions: {
     listRoles: '/roles',

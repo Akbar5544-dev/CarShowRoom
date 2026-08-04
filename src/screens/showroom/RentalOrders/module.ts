@@ -1,5 +1,5 @@
 import type {IconName} from '../../../assets/iconXml';
-import type {MetricCardData} from '../../../components';
+import type {DateRangePreset, MetricCardData} from '../../../components';
 
 export type RentalOrdersTabId =
   | 'orders'
@@ -15,7 +15,12 @@ export type OrderStatus =
   | 'Completed'
   | 'Cancelled';
 
-export type InvoiceStatus = 'Paid' | 'Pending' | 'Overdue' | 'Draft';
+export type InvoiceStatus =
+  | 'Paid'
+  | 'Pending'
+  | 'Overdue'
+  | 'Draft'
+  | 'Completed';
 
 export type RentalOrderRow = {
   id: string;
@@ -93,7 +98,11 @@ export type RentalOrdersController = {
   onCloseSendRemindersModal: () => void;
   onConfirmSendReminders: () => void;
   onStatusFilterPress: () => void;
+  dateRangePreset: DateRangePreset;
+  isDateRangeModalVisible: boolean;
   onDateFilterPress: () => void;
+  onCloseDateRangeModal: () => void;
+  onSelectDateRange: (preset: DateRangePreset) => void;
   onOrderPress: (orderId: string) => void;
   onInvoicePress: (invoiceId: string) => void;
   onViewInvoicePress: (invoiceId: string) => void;

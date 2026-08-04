@@ -60,6 +60,8 @@ export type StaffOverviewControllerState = {
   documentSearch: string;
   isUploadModalVisible: boolean;
   uploadFileName: string | null;
+  uploadCount: number;
+  isMonthlyFilterModalVisible: boolean;
   isAddSalaryModalVisible: boolean;
   isAddBonusModalVisible: boolean;
   isAssignShiftModalVisible: boolean;
@@ -73,6 +75,8 @@ export type StaffOverviewControllerState = {
   onCloseUploadModal: () => void;
   onPickUploadDocument: () => void;
   onConfirmUploadPress: () => void;
+  onOpenMonthlyFilterPress: () => void;
+  onCloseMonthlyFilterModal: () => void;
   onAddSalaryPress: () => void;
   onCloseAddSalaryModal: () => void;
   onConfirmAddSalary: (values: {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {API_BASE_URL} from '../constants';
-import {clearAuthSession, getAuthToken} from './tokenStorage';
+import {clearAuthSession, getAuthTokenForRequest} from './tokenStorage';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -12,7 +12,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   async config => {
-    const token = await getAuthToken();
+    const token = await getAuthTokenForRequest(config.url);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +34,16 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   response => response,
   async error => {
-    if (error?.response?.status === 401) {
+    // Only wipe the session on auth-probe endpoints. A 401 from Saved/Liked
+    // (wrong guard, expired, etc.) must not force-logout the whole app mid-flow.
+    const status = error?.response?.status;
+    const url = String(error?.config?.url ?? '');
+    const isAuthProbe =
+      url.endsWith('/me') ||
+      url.endsWith('/public/me') ||
+      url.endsWith('/logout') ||
+      url.endsWith('/public/logout');
+    if (status === 401 && isAuthProbe) {
       await clearAuthSession();
     }
     return Promise.reject(error);

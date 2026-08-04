@@ -5,7 +5,7 @@ import {showMessage} from 'react-native-flash-message';
 import {getApiErrorMessage} from '../../../api';
 import {EmployeeCardData} from '../../../components/EmployeeCard';
 import type {StaffStackParamList} from '../../../navigation/types';
-import {staffManagementStaffService} from '../../../services';
+import {staffManagementSalariesService, staffManagementStaffService} from '../../../services';
 import {
   AnyRecord,
   asRecord,
@@ -47,12 +47,58 @@ function mapEmployeeRow(item: AnyRecord): EmployeeCardData {
     role,
     employeeId,
     status,
-    salary: formatMoney(pickNumber(row, ['basic_salary', 'salary'])),
+    salary: formatMoney(
+      pickNumber(row, [
+        'basic_salary',
+        'basicSalary',
+        'base_salary',
+        'baseSalary',
+        'salary',
+        'monthly_salary',
+        'monthlySalary',
+        'net_salary',
+        'netSalary',
+      ]),
+    ),
     phone: pickString(row, ['phone'], '—'),
     email: pickString(row, ['email'], '—'),
     initials: initialsFromName(name),
     avatarColor: avatarColorFromId(id),
   };
+}
+
+function pickSalaryStaffId(row: AnyRecord): string {
+  return pickString(
+    row,
+    ['staff_id', 'employee_id', 'staffId', 'employeeId', 'user_id'],
+    '',
+  );
+}
+
+function pickSalaryAmount(row: AnyRecord): number {
+  return pickNumber(row, [
+    'basic_salary',
+    'base_salary',
+    'salary',
+    'monthly_salary',
+    'net_salary',
+    'amount',
+    'paid_amount',
+  ]);
+}
+
+function salarySortStamp(row: AnyRecord): number {
+  const year = pickNumber(row, ['year', 'pay_year', 'paid_year'], 0);
+  const month = pickNumber(row, ['month', 'pay_month'], 0);
+  if (year > 0 && month > 0) {
+    return year * 100 + month;
+  }
+  const dateRaw = pickString(row, ['paid_at', 'date', 'created_at', 'updated_at']);
+  const parsed = new Date(dateRaw).getTime();
+  if (Number.isFinite(parsed)) {
+    return parsed;
+  }
+  return pickNumber(row, ['id'], 0);
 }
 
 export function useAllEmployeesController(): AllEmployeesController {
@@ -64,13 +110,47 @@ export function useAllEmployeesController(): AllEmployeesController {
 
   const fetchData = useCallback(async (query: string) => {
     try {
-      const response = await staffManagementStaffService.listStaff({
-        search: query || undefined,
-        per_page: 50,
-      });
+      const [response, salariesResponse] = await Promise.all([
+        staffManagementStaffService.listStaff({
+          search: query || undefined,
+          per_page: 50,
+        }),
+        staffManagementSalariesService
+          .listSalaries({per_page: 200})
+          .catch(() => null),
+      ]);
       const rows = unwrapList(response);
       const meta = unwrapMeta(response);
-      setEmployees(rows.map(mapEmployeeRow));
+
+      const salaryRows = salariesResponse ? unwrapList(salariesResponse) : [];
+      const latestSalaryByStaffId = new Map<string, number>();
+      salaryRows
+        .map(item => asRecord(item))
+        .sort((a, b) => salarySortStamp(b) - salarySortStamp(a))
+        .forEach(row => {
+          const staffId = pickSalaryStaffId(row);
+          if (!staffId || latestSalaryByStaffId.has(staffId)) {
+            return;
+          }
+          latestSalaryByStaffId.set(staffId, pickSalaryAmount(row));
+        });
+
+      setEmployees(
+        rows.map(item => {
+          const row = asRecord(item);
+          const mapped = mapEmployeeRow(row);
+          const staffId = pickString(row, ['id'], '');
+          const salaryFromSalaryApi = latestSalaryByStaffId.get(staffId);
+          if (
+            salaryFromSalaryApi != null &&
+            Number.isFinite(salaryFromSalaryApi) &&
+            salaryFromSalaryApi > 0
+          ) {
+            return {...mapped, salary: formatMoney(salaryFromSalaryApi)};
+          }
+          return mapped;
+        }),
+      );
 
       const departments = new Set(
         rows
@@ -120,6 +200,16 @@ export function useAllEmployeesController(): AllEmployeesController {
     [navigation],
   );
 
+  const onSalaryPress = useCallback(
+    (employee: EmployeeCardData) => {
+      navigation.navigate('StaffOverview', {
+        employeeId: employee.id,
+        initialTab: 'salary',
+      });
+    },
+    [navigation],
+  );
+
   return {
     isLoading: false,
     summary,
@@ -130,5 +220,6 @@ export function useAllEmployeesController(): AllEmployeesController {
     onAddEmployeePress,
     onFilterPress,
     onProfilePress,
+    onSalaryPress,
   };
 }

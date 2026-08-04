@@ -210,7 +210,7 @@ export function useRolesPermissionsController(): RolesPermissionsController {
     navigation.navigate('ManageRoles');
   }, [navigation]);
 
-  const onRoleMorePress = useCallback(
+  const onRolePress = useCallback(
     (roleId: string) => {
       navigation.navigate('RoleOverview', {roleId});
     },
@@ -224,6 +224,6 @@ export function useRolesPermissionsController(): RolesPermissionsController {
     onBackPress,
     onActivityLogsPress,
     onManagePress,
-    onRoleMorePress,
+    onRolePress,
   };
 }

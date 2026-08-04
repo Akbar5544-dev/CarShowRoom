@@ -33,31 +33,29 @@ type Nav = NativeStackNavigationProp<VehiclesStackParamList, 'RentalVehicle'>;
 type Route = RouteProp<VehiclesStackParamList, 'RentalVehicle'>;
 
 const STEPS: RentalWizardStep[] = [
-  {id: 0, label: 'Customer', icon: 'customers'},
-  {id: 1, label: 'Schedule', icon: 'calendarField'},
-  {id: 2, label: 'Add-ons', icon: 'gift'},
-  {id: 3, label: 'Insurance', icon: 'documentFile'},
-  {id: 4, label: 'Payment', icon: 'payroll'},
-  {id: 5, label: 'Confirm', icon: 'activityCheck'},
+  {id: 0, label: 'Add-ons', icon: 'gift'},
+  {id: 1, label: 'Insurance', icon: 'documentFile'},
+  {id: 2, label: 'Confirm', icon: 'activityCheck'},
 ];
 
-const STEP_TITLES = [
-  'Select Customer',
-  'Schedule & Locations',
-  'Add-ons',
-  'Insurance',
-  'Payment',
-  'Review & Confirm',
-];
+const STEP_TITLES = ['Add-ons', 'Insurance', 'Review & Confirm'];
 
 const STEP_DESCRIPTIONS = [
-  'Choose an existing customer or add a new one.',
-  'Set pickup and return details.',
   'Optional extras to enhance the trip.',
   'Pick a coverage level for this trip.',
-  'Collect the security deposit and first payment.',
   'Please verify the details before finalizing.',
 ];
+
+function defaultRentalDates() {
+  const start = new Date();
+  const end = new Date();
+  end.setDate(end.getDate() + 1);
+  const toIso = (date: Date) => date.toISOString().slice(0, 10);
+  return {
+    pickupDateTime: toIso(start),
+    returnDateTime: toIso(end),
+  };
+}
 
 const MOCK_CUSTOMERS_FALLBACK: RentalCustomer[] = [
   {
@@ -166,8 +164,7 @@ const PAYMENT_METHODS = [
 ];
 
 const INITIAL_FORM: RentalVehicleForm = {
-  pickupDateTime: '',
-  returnDateTime: '',
+  ...defaultRentalDates(),
   pickupLocation: '',
   dropoffLocation: '',
   cardNumber: '',
@@ -378,7 +375,7 @@ export function useRentalVehicleController(): RentalVehicleController {
   );
 
   const canGoPrevious = currentStep > 0;
-  const isLastStep = currentStep === 5;
+  const isLastStep = currentStep === 2;
 
   const setField = useCallback(
     <K extends keyof RentalVehicleForm>(key: K, value: RentalVehicleForm[K]) => {
@@ -431,7 +428,10 @@ export function useRentalVehicleController(): RentalVehicleController {
       return;
     }
     if (!selectedCustomerId) {
-      showMessage({message: 'Please select a customer', type: 'warning'});
+      showMessage({
+        message: 'No customer available for this rental',
+        type: 'warning',
+      });
       return;
     }
     if (!params.vehicleId) {
@@ -439,11 +439,15 @@ export function useRentalVehicleController(): RentalVehicleController {
       return;
     }
 
-    const startDate = parseRentalDateTime(form.pickupDateTime);
-    const endDate = parseRentalDateTime(form.returnDateTime);
+    const startDate =
+      parseRentalDateTime(form.pickupDateTime) ||
+      parseRentalDateTime(defaultRentalDates().pickupDateTime);
+    const endDate =
+      parseRentalDateTime(form.returnDateTime) ||
+      parseRentalDateTime(defaultRentalDates().returnDateTime);
     if (!startDate || !endDate) {
       showMessage({
-        message: 'Please enter valid pickup and return dates',
+        message: 'Could not resolve rental dates',
         type: 'warning',
       });
       return;
@@ -500,18 +504,52 @@ export function useRentalVehicleController(): RentalVehicleController {
   ]);
 
   const onNextPress = useCallback(() => {
-    if (currentStep === 0 && !selectedCustomerId) {
-      showMessage({message: 'Please select a customer', type: 'warning'});
-      return;
-    }
-
     if (isLastStep) {
+      if (!selectedCustomerId) {
+        showMessage({
+          message: 'No customer available for this rental',
+          type: 'warning',
+        });
+        return;
+      }
+      if (!params.vehicleId) {
+        showMessage({message: 'Vehicle is missing', type: 'danger'});
+        return;
+      }
+      const startDate =
+        parseRentalDateTime(form.pickupDateTime) ||
+        parseRentalDateTime(defaultRentalDates().pickupDateTime);
+      const endDate =
+        parseRentalDateTime(form.returnDateTime) ||
+        parseRentalDateTime(defaultRentalDates().returnDateTime);
+      if (!startDate || !endDate) {
+        showMessage({
+          message: 'Could not resolve rental dates',
+          type: 'warning',
+        });
+        return;
+      }
+      if (!(dailyRateValue > 0)) {
+        showMessage({
+          message: 'Daily rate is required for this vehicle',
+          type: 'danger',
+        });
+        return;
+      }
       submitRental();
       return;
     }
 
     setCurrentStep(prev => (prev + 1) as RentalVehicleStepId);
-  }, [currentStep, isLastStep, selectedCustomerId, submitRental]);
+  }, [
+    dailyRateValue,
+    form.pickupDateTime,
+    form.returnDateTime,
+    isLastStep,
+    params.vehicleId,
+    selectedCustomerId,
+    submitRental,
+  ]);
 
   return {
     vehicle,

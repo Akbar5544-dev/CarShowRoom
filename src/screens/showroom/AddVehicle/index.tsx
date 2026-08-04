@@ -39,7 +39,10 @@ export function AddVehicle() {
     insuranceDocName,
     registrationDocName,
     imageUploads,
+    categoryOptions,
     setField,
+    fieldErrors,
+    togglePricingFlag,
     onNextPress,
     onPreviousPress,
     onBackPress,
@@ -48,7 +51,6 @@ export function AddVehicle() {
     onInsuranceDocPress,
     onRegistrationDocPress,
     onImageUploadPress,
-    categoryOptions,
   } = useAddVehicleController();
 
   const stepNumber = currentStep + 1;
@@ -121,12 +123,14 @@ export function AddVehicle() {
                       value={form.make}
                       onChangeText={text => setField('make', text)}
                       placeholder="BMW"
+                      error={fieldErrors.make}
                     />
                     <FormField
                       label="Model"
                       value={form.model}
                       onChangeText={text => setField('model', text)}
                       placeholder="i7 xDrive60"
+                      error={fieldErrors.model}
                     />
                   </FormRow>
                   <FormRow>
@@ -136,6 +140,7 @@ export function AddVehicle() {
                       onChangeText={text => setField('year', text)}
                       placeholder="2025"
                       keyboardType="number-pad"
+                      error={fieldErrors.year}
                     />
                     <FormSelect
                       label="Category"
@@ -269,6 +274,7 @@ export function AddVehicle() {
                       value={form.dailyRate}
                       onChangeText={text => setField('dailyRate', text)}
                       placeholder="$420"
+                      error={fieldErrors.dailyRate}
                     />
                     <FormField
                       label="Weekly Rate"
@@ -306,15 +312,51 @@ export function AddVehicle() {
                     />
                   </FormRow>
                   <View style={styles.tagRow}>
-                    <View style={styles.tag}>
-                      <Text style={styles.tagText}>Weekend surge 12%</Text>
-                    </View>
-                    <View style={styles.tag}>
-                      <Text style={styles.tagText}>VIP discount enabled</Text>
-                    </View>
-                    <View style={styles.tag}>
-                      <Text style={styles.tagText}>Tax inclusive</Text>
-                    </View>
+                    <Pressable
+                      style={[
+                        styles.tag,
+                        form.weekendSurge && styles.tagActive,
+                      ]}
+                      onPress={() => togglePricingFlag('weekendSurge')}
+                      accessibilityRole="button"
+                      accessibilityState={{selected: form.weekendSurge}}>
+                      <Text
+                        style={[
+                          styles.tagText,
+                          form.weekendSurge && styles.tagTextActive,
+                        ]}>
+                        Weekend surge 12%
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.tag, form.vipDiscount && styles.tagActive]}
+                      onPress={() => togglePricingFlag('vipDiscount')}
+                      accessibilityRole="button"
+                      accessibilityState={{selected: form.vipDiscount}}>
+                      <Text
+                        style={[
+                          styles.tagText,
+                          form.vipDiscount && styles.tagTextActive,
+                        ]}>
+                        VIP discount enabled
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[
+                        styles.tag,
+                        form.taxInclusive && styles.tagActive,
+                      ]}
+                      onPress={() => togglePricingFlag('taxInclusive')}
+                      accessibilityRole="button"
+                      accessibilityState={{selected: form.taxInclusive}}>
+                      <Text
+                        style={[
+                          styles.tagText,
+                          form.taxInclusive && styles.tagTextActive,
+                        ]}>
+                        Tax inclusive
+                      </Text>
+                    </Pressable>
                   </View>
                 </View>
               ) : null}
@@ -394,13 +436,14 @@ export function AddVehicle() {
                       id: item.id,
                       title: item.title,
                       fileName: item.fileName,
+                      count: item.count,
                     }))}
                     onPress={item => onImageUploadPress(item.id)}
                   />
                   <View style={styles.infoBox}>
                     <Text style={styles.infoText}>
-                      Recommended: upload at least 6 clear photos before making
-                      this vehicle available online.
+                      Each slot supports multiple photos. Tap again to add more
+                      images to the same slot.
                     </Text>
                   </View>
                 </View>

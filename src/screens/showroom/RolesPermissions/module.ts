@@ -25,5 +25,5 @@ export type RolesPermissionsController = {
   onBackPress: () => void;
   onActivityLogsPress: () => void;
   onManagePress: () => void;
-  onRoleMorePress: (roleId: string) => void;
+  onRolePress: (roleId: string) => void;
 };

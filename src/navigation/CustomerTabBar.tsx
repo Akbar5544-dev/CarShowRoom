@@ -4,18 +4,21 @@ import {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Icon} from '../components';
 import {IconName} from '../assets/iconXml';
-import {type AppColors, useThemedStyles, useThemeColors} from '../theme';
+import {type AppColors, useThemedStyles} from '../theme';
+
+const FEED_PRIMARY = '#2563eb';
+const FEED_MUTED = '#6b7280';
+const FEED_BORDER = '#e5e7eb';
 
 const TAB_CONFIG: Record<string, {label: string; icon: IconName}> = {
   CustomerHomeTab: {label: 'Home', icon: 'navHome'},
-  CustomerVehiclesTab: {label: 'Vehicles', icon: 'navVehicles'},
   CustomerShowroomsTab: {label: 'Showroom', icon: 'navShowroom'},
-  CustomerChatTab: {label: 'Chat', icon: 'navChat'},
+  CustomerMechanicsTab: {label: 'Mechanics', icon: 'activityWrench'},
+  CustomerAuctionTab: {label: 'Auction', icon: 'gavel'},
   CustomerJobsTab: {label: 'Jobs', icon: 'navJobs'},
 };
 
 export function CustomerTabBar({state, navigation}: BottomTabBarProps) {
-  const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
 
@@ -48,7 +51,7 @@ export function CustomerTabBar({state, navigation}: BottomTabBarProps) {
             <Icon
               name={config.icon}
               size={22}
-              color={focused ? colors.actionBlue : colors.textSecondary}
+              color={focused ? FEED_PRIMARY : FEED_MUTED}
             />
             <Text style={[styles.label, focused && styles.labelActive]}>
               {config.label}
@@ -60,16 +63,16 @@ export function CustomerTabBar({state, navigation}: BottomTabBarProps) {
   );
 }
 
-function createStyles(c: AppColors) {
+function createStyles(_c: AppColors) {
   return StyleSheet.create({
     bar: {
       flexDirection: 'row',
       alignItems: 'flex-start',
-      backgroundColor: c.surface,
+      backgroundColor: '#fff',
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: c.border,
+      borderTopColor: FEED_BORDER,
       paddingTop: 10,
-      paddingHorizontal: 6,
+      paddingHorizontal: 4,
     },
     tab: {
       flex: 1,
@@ -78,13 +81,13 @@ function createStyles(c: AppColors) {
       gap: 4,
     },
     label: {
-      fontSize: 11,
-      fontWeight: '600',
-      color: c.textSecondary,
+      fontSize: 10,
+      fontWeight: '500',
+      color: FEED_MUTED,
     },
     labelActive: {
-      color: c.actionBlue,
-      fontWeight: '700',
+      color: FEED_PRIMARY,
+      fontWeight: '600',
     },
   });
 }

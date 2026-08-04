@@ -1,28 +1,36 @@
-import {useCallback, useState} from 'react';
+import {useCallback, useMemo, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {showMessage} from 'react-native-flash-message';
 import {
+  extractAuthToken,
+  extractAuthUser,
   getApiErrorMessage,
-  setAuthToken,
+  setAuthTokenForRole,
   setAuthUser,
 } from '../../api';
 import type {RootStackParamList} from '../../navigation/types';
-import {authService} from '../../services';
+import {authService, publicSiteAuthService} from '../../services';
 import {setSession} from '../../store/appSlice';
 import {useAppDispatch} from '../../store/hooks';
-import {asRecord} from '../../utils/apiHelpers';
 import {
   rememberAuthRole,
   setActiveAuthRole,
   type AuthRole,
   withAuthRole,
 } from '../../utils/authRole';
-import {validateSignUpForm} from '../../utils/authValidation';
-import type {
-  SignUpController,
-  SignUpFieldErrors,
-  SignUpRoleOption,
+import {
+  validateAuthEmail,
+  validateAuthFullName,
+  validateAuthPassword,
+  validateAuthPhone,
+} from '../../utils/authValidation';
+import {pickFromGallery, type PickedMedia} from '../../utils/mediaPicker';
+import {
+  CITY_OPTIONS,
+  type SignUpController,
+  type SignUpFieldErrors,
+  type SignUpRoleOption,
 } from './module';
 
 type SignUpNav = NativeStackNavigationProp<RootStackParamList, 'SignUp'>;
@@ -30,15 +38,29 @@ type SignUpNav = NativeStackNavigationProp<RootStackParamList, 'SignUp'>;
 const ROLE_OPTIONS: SignUpRoleOption[] = [
   {
     id: 'customer',
-    title: 'Buyer / Renter',
-    description: 'Save cars and contact showrooms',
+    title: 'Customer',
+    description: 'Buy, rent, save & message showrooms',
   },
   {
     id: 'admin',
-    title: 'Admin',
+    title: 'Showroom / Admin',
     description: 'List inventory and manage leads',
   },
 ];
+
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('92') && digits.length > 10) {
+    return digits;
+  }
+  if (digits.startsWith('0')) {
+    return `92${digits.slice(1)}`;
+  }
+  if (digits.length === 10) {
+    return `92${digits}`;
+  }
+  return digits;
+}
 
 export function useSignUpController(): SignUpController {
   const navigation = useNavigation<SignUpNav>();
@@ -46,6 +68,11 @@ export function useSignUpController(): SignUpController {
   const [role, setRoleState] = useState<AuthRole>('customer');
   const [email, setEmailState] = useState('');
   const [fullName, setFullNameState] = useState('');
+  const [showroomName, setShowroomNameState] = useState('');
+  const [logo, setLogo] = useState<PickedMedia | null>(null);
+  const [country, setCountryState] = useState<string | null>(null);
+  const [city, setCityState] = useState<string | null>(null);
+  const [address, setAddressState] = useState('');
   const [phone, setPhoneState] = useState('');
   const [password, setPasswordState] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -53,8 +80,14 @@ export function useSignUpController(): SignUpController {
   const [errors, setErrors] = useState<SignUpFieldErrors>({});
   const [loading, setLoading] = useState(false);
 
+  const cityOptions = useMemo(
+    () => (country ? CITY_OPTIONS[country] ?? [] : []),
+    [country],
+  );
+
   const setRole = useCallback((value: AuthRole) => {
     setRoleState(value);
+    setErrors({});
   }, []);
 
   const setEmail = useCallback((value: string) => {
@@ -67,6 +100,11 @@ export function useSignUpController(): SignUpController {
     setErrors(prev => ({...prev, fullName: undefined}));
   }, []);
 
+  const setShowroomName = useCallback((value: string) => {
+    setShowroomNameState(value);
+    setErrors(prev => ({...prev, showroomName: undefined}));
+  }, []);
+
   const setPhone = useCallback((value: string) => {
     setPhoneState(value);
     setErrors(prev => ({...prev, phone: undefined}));
@@ -75,6 +113,19 @@ export function useSignUpController(): SignUpController {
   const setPassword = useCallback((value: string) => {
     setPasswordState(value);
     setErrors(prev => ({...prev, password: undefined}));
+  }, []);
+
+  const setCountry = useCallback((value: string | null) => {
+    setCountryState(value);
+    setCityState(null);
+  }, []);
+
+  const setCity = useCallback((value: string | null) => {
+    setCityState(value);
+  }, []);
+
+  const setAddress = useCallback((value: string) => {
+    setAddressState(value);
   }, []);
 
   const onTogglePassword = useCallback(() => {
@@ -86,45 +137,94 @@ export function useSignUpController(): SignUpController {
     setErrors(prev => ({...prev, terms: undefined}));
   }, []);
 
+  const onPickLogo = useCallback(async () => {
+    const picked = await pickFromGallery();
+    if (picked) {
+      if (picked.fileSize && picked.fileSize > 5 * 1024 * 1024) {
+        showMessage({message: 'Logo must be under 5MB', type: 'warning'});
+        return;
+      }
+      setLogo(picked);
+    }
+  }, []);
+
+  const onClearLogo = useCallback(() => setLogo(null), []);
+
   const onCreateAccount = useCallback(async () => {
-    const nextErrors = validateSignUpForm(email, fullName, password, {
-      phone,
-      requireTerms: true,
-      agreedToTerms,
-    });
+    const nextErrors: SignUpFieldErrors = {};
+    const emailError = validateAuthEmail(email);
+    const fullNameError = validateAuthFullName(fullName);
+    const passwordError = validateAuthPassword(password, {minLength: 8});
+    const phoneError = validateAuthPhone(phone);
+    if (emailError) nextErrors.email = emailError;
+    if (fullNameError) nextErrors.fullName = fullNameError;
+    if (passwordError) nextErrors.password = passwordError;
+    if (phoneError) nextErrors.phone = phoneError;
+    if (role === 'admin' && !showroomName.trim()) {
+      nextErrors.showroomName = 'Please enter showroom name';
+    }
+    if (!agreedToTerms) {
+      nextErrors.terms = 'Please agree to the Terms of Service';
+    }
     setErrors(nextErrors);
-    if (
-      nextErrors.email ||
-      nextErrors.fullName ||
-      nextErrors.phone ||
-      nextErrors.password ||
-      nextErrors.terms
-    ) {
+    if (Object.keys(nextErrors).length) {
       return;
     }
 
-    const ownerName = fullName.trim();
-    const showroomName =
-      role === 'admin' ? `${ownerName}'s Showroom` : `${ownerName} Account`;
-    const trimmedEmail = email.trim();
-
     try {
       setLoading(true);
-      const response = await authService.register({
-        showroom_name: showroomName,
-        owner_name: ownerName,
-        email: trimmedEmail,
-        password,
-        phone: phone.trim() || undefined,
-        role,
-      });
+      const ownerName = fullName.trim();
+      const trimmedEmail = email.trim();
+      const phoneValue = normalizePhone(phone);
+
+      let response: unknown;
+      if (role === 'customer') {
+        response = await publicSiteAuthService.register({
+          name: ownerName,
+          email: trimmedEmail,
+          password,
+          phone: phoneValue,
+          country: country || undefined,
+          city: city || undefined,
+        });
+      } else if (logo) {
+        const form = new FormData();
+        form.append('showroom_name', showroomName.trim());
+        form.append('owner_name', ownerName);
+        form.append('email', trimmedEmail);
+        form.append('password', password);
+        form.append('phone', phoneValue);
+        form.append('role', 'admin');
+        if (country) form.append('country', country);
+        if (city) form.append('city', city);
+        if (address.trim()) form.append('address', address.trim());
+        form.append('logo', {
+          uri: logo.uri,
+          type: logo.type,
+          name: logo.name,
+        } as any);
+        response = await authService.register(form as any);
+      } else {
+        response = await authService.register({
+          showroom_name: showroomName.trim(),
+          owner_name: ownerName,
+          email: trimmedEmail,
+          password,
+          phone: phoneValue,
+          role: 'admin',
+          country: country || undefined,
+          city: city || undefined,
+          address: address.trim() || undefined,
+        } as any);
+      }
+
       await rememberAuthRole(trimmedEmail, role);
 
-      const token = response?.data?.token;
+      const token = extractAuthToken(response);
       if (token) {
-        await setAuthToken(token);
+        await setAuthTokenForRole(token, role);
         await setActiveAuthRole(role);
-        const user = withAuthRole(asRecord(response.data.user), role);
+        const user = withAuthRole(extractAuthUser(response), role);
         await setAuthUser(user);
         dispatch(setSession({user, authenticated: true}));
         navigation.reset({
@@ -135,7 +235,7 @@ export function useSignUpController(): SignUpController {
       }
 
       showMessage({
-        message: response?.message || 'Account created. Please log in.',
+        message: 'Account created. Please log in.',
         type: 'success',
       });
       navigation.navigate('Login');
@@ -148,14 +248,19 @@ export function useSignUpController(): SignUpController {
       setLoading(false);
     }
   }, [
+    address,
     agreedToTerms,
+    city,
+    country,
     dispatch,
     email,
     fullName,
+    logo,
     navigation,
     password,
     phone,
     role,
+    showroomName,
   ]);
 
   const onLoginPress = useCallback(() => {
@@ -169,15 +274,27 @@ export function useSignUpController(): SignUpController {
     role,
     roleOptions: ROLE_OPTIONS,
     fullName,
+    showroomName,
+    logo,
+    country,
+    city,
+    address,
     email,
     phone,
     password,
     passwordVisible,
     agreedToTerms,
+    cityOptions,
     errors,
     loading,
     setRole,
     setFullName,
+    setShowroomName,
+    onPickLogo,
+    onClearLogo,
+    setCountry,
+    setCity,
+    setAddress,
     setEmail,
     setPhone,
     setPassword,

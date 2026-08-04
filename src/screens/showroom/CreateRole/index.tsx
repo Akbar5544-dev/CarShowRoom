@@ -9,45 +9,15 @@ import {
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Icon, Screen} from '../../../components';
-import {useThemedStyles, useThemeColors, colors} from '../../../theme';
+import {useThemedStyles, useThemeColors} from '../../../theme';
 import type {
   AssignableUser,
   CreateRoleStepId,
   PermissionModuleRow,
   PermissionRoleColumn,
-  RolePreset,
 } from './module';
 import {createStyles} from './styles';
 import {useCreateRoleController} from './useController';
-
-function PresetCard({
-  preset,
-  active,
-  onPress,
-}: {
-  preset: RolePreset;
-  active: boolean;
-  onPress: () => void;
-}) {
-  const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
-
-  return (
-    <Pressable
-      style={[styles.presetCard, active && styles.presetCardActive]}
-      onPress={onPress}>
-      <View style={[styles.presetIcon, active && styles.presetIconActive]}>
-        <Icon
-          name={preset.icon}
-          size={15}
-          color={active ? colors.white : colors.textSecondary}
-        />
-      </View>
-      <Text style={styles.presetTitle}>{preset.title}</Text>
-      <Text style={styles.presetDescription}>{preset.description}</Text>
-    </Pressable>
-  );
-}
 
 function GrantIcon({
   allowed,
@@ -137,10 +107,7 @@ function AssignUsersStep({
 
   return (
     <View style={styles.card}>
-      <View style={styles.presetHeader}>
-        <Text style={styles.optional}>Optional — you can do this later</Text>
-        <Text style={styles.cardTitle}>Assign users</Text>
-      </View>
+      <Text style={styles.cardTitle}>Assign users</Text>
       <View style={styles.userList}>
         {users.length === 0 ? (
           <Text style={styles.userEmail}>No employees found</Text>
@@ -247,15 +214,10 @@ export function CreateRole() {
     currentStep,
     steps,
     form,
-    presets,
     permissionColumns,
     permissionRows,
     assignableUsers,
     assignedUserIds,
-    summaryName,
-    summaryPreset,
-    summaryPermissions,
-    summaryMembers,
     summaryStatus,
     reviewName,
     reviewDescription,
@@ -267,7 +229,6 @@ export function CreateRole() {
     setName,
     setDescription,
     setActiveOnCreation,
-    setPreset,
     toggleGrant,
     toggleAssignUser,
     onStepPress,
@@ -400,27 +361,10 @@ export function CreateRole() {
                     onValueChange={setActiveOnCreation}
                     trackColor={{
                       false: colors.border,
-                      true: colors.actionBlue,
+                      true: colors.successBright,
                     }}
                     thumbColor={colors.white}
                   />
-                </View>
-              </View>
-
-              <View style={styles.card}>
-                <View style={styles.presetHeader}>
-                  <Text style={styles.optional}>Optional</Text>
-                  <Text style={styles.cardTitle}>Start from a preset</Text>
-                </View>
-                <View style={styles.presetGrid}>
-                  {presets.map(preset => (
-                    <PresetCard
-                      key={preset.id}
-                      preset={preset}
-                      active={form.preset === preset.id}
-                      onPress={() => setPreset(preset.id)}
-                    />
-                  ))}
                 </View>
               </View>
             </>
@@ -478,40 +422,6 @@ export function CreateRole() {
                   : 'Continue'}
               </Text>
             </Pressable>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.summaryTitle}>Summary</Text>
-            <View style={styles.summaryList}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Name</Text>
-                <Text style={styles.summaryValue}>{summaryName}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Preset</Text>
-                <Text style={styles.summaryValue}>{summaryPreset}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Permissions</Text>
-                <Text style={styles.summaryValue}>{summaryPermissions}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Members</Text>
-                <Text style={styles.summaryValue}>{summaryMembers}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Status</Text>
-                <Text
-                  style={[
-                    styles.summaryValue,
-                    form.activeOnCreation
-                      ? styles.summaryStatusActive
-                      : styles.summaryStatusInactive,
-                  ]}>
-                  {summaryStatus}
-                </Text>
-              </View>
-            </View>
           </View>
         </View>
       </KeyboardAwareScrollView>

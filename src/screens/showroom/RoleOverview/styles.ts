@@ -91,10 +91,16 @@ export const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 999,
     backgroundColor: colors.track,
   },
+  statusBadgeActive: {
+    backgroundColor: 'rgba(32,180,107,0.14)',
+  },
   statusBadgeText: {
     fontSize: 9,
     fontWeight: '600',
     color: colors.textDark,
+  },
+  statusBadgeTextActive: {
+    color: colors.successBright,
   },
   actionRow: {
     flexDirection: 'row',

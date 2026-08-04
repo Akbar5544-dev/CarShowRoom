@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {Linking} from 'react-native';
 import {showMessage} from 'react-native-flash-message';
 import {getApiErrorMessage} from '../../../api';
 import {
@@ -43,7 +44,8 @@ import {
 } from '../../../utils/apiHelpers';
 import {
   createMediaFormData,
-  pickFromGallery,
+  formatMediaSelectionLabel,
+  pickMultipleFromGallery,
   type PickedMedia,
 } from '../../../utils/mediaPicker';
 import type {StaffOverviewController} from './module';
@@ -179,14 +181,35 @@ function mapShiftItem(item: AnyRecord, index: number): ShiftItem {
 function mapSalaryRow(item: AnyRecord, index: number): SalaryRow {
   const row = asRecord(item);
   const id = pickString(row, ['id'], String(index));
-  const monthLabel =
-    pickString(row, ['month', 'period', 'pay_period']) ||
-    (() => {
-      const date = parseDate(pickString(row, ['created_at', 'date', 'paid_at']));
-      return date
-        ? date.toLocaleDateString('en-US', {month: 'short', year: 'numeric'})
-        : '';
-    })();
+  const yearRaw = pickString(row, ['year', 'pay_year', 'paid_year'], '');
+
+  const monthRaw = pickString(row, ['month', 'period', 'pay_period'], '');
+  let monthLabel = '';
+
+  // If API gives month as a number (1-12), convert it to a month name.
+  const monthNum = Number(monthRaw);
+  if (
+    Number.isFinite(monthNum) &&
+    monthNum >= 1 &&
+    monthNum <= 12 &&
+    MONTH_OPTIONS[monthNum - 1]
+  ) {
+    const mName = MONTH_OPTIONS[monthNum - 1];
+    monthLabel = yearRaw
+      ? `${mName} ${yearRaw}`
+      : `${mName}`;
+  } else {
+    monthLabel =
+      monthRaw ||
+      (() => {
+        const date = parseDate(
+          pickString(row, ['created_at', 'date', 'paid_at']),
+        );
+        return date
+          ? date.toLocaleDateString('en-US', {month: 'short', year: 'numeric'})
+          : '';
+      })();
+  }
   const bonusVal = pickNumber(row, ['bonus', 'bonus_amount']);
   const deductionVal = pickNumber(row, ['deduction', 'deductions']);
   return {
@@ -202,7 +225,11 @@ function mapBonusItem(item: AnyRecord, index: number): BonusItem {
   const row = asRecord(item);
   const id = pickString(row, ['id'], String(index));
   const title = pickString(row, ['title', 'reason', 'description'], 'Bonus');
-  const date = pickString(row, ['date', 'created_at']).slice(0, 10);
+  const rawDate = pickString(row, ['date', 'created_at'], '');
+  const parsedDate = parseDate(rawDate);
+  const dateIso = parsedDate
+    ? parsedDate.toISOString().slice(0, 10)
+    : rawDate.slice(0, 10);
   const reference = pickString(row, ['reference', 'code'], `B-${id}`);
   const statusRaw = pickString(row, ['status'], 'pending').toLowerCase();
   const status: BonusItem['status'] =
@@ -212,15 +239,34 @@ function mapBonusItem(item: AnyRecord, index: number): BonusItem {
   return {
     id,
     title,
-    meta: [date, reference].filter(Boolean).join(' · '),
+    meta: [dateIso, reference].filter(Boolean).join(' · '),
     amount: `+${formatMoney(pickNumber(row, ['amount']))}`,
     status,
   };
 }
 
 function mapAttendanceStatus(raw: string): AttendanceDayCell['status'] {
-  const status = raw.toLowerCase();
+  const status = raw.toString().trim().toLowerCase();
+
+  // Some APIs return numeric codes instead of strings.
+  // Common mapping we support:
+  // 1/2 => Present (2 treated as late/present)
+  // 3 => Absent
+  // 4 => Leave
+  if (status === '1' || status === '2') {
+    return 'P';
+  }
+  if (status === '3') {
+    return 'A';
+  }
+  if (status === '4') {
+    return 'L';
+  }
+
   if (status.includes('present') || status === 'p') {
+    return 'P';
+  }
+  if (status.includes('late')) {
     return 'P';
   }
   if (status.includes('absent') || status === 'a') {
@@ -255,7 +301,12 @@ function buildAttendanceDayMap(
     }
     map[date.getDate()] = {
       status: code,
-      recordId: pickString(row, ['id'], '') || null,
+      recordId:
+        pickString(
+          row,
+          ['id', 'attendance_id', 'staff_attendance_id', 'staffAttendanceId'],
+          '',
+        ) || null,
     };
   });
   return map;
@@ -355,15 +406,21 @@ export function useStaffOverviewController(): StaffOverviewController {
   const [shiftSearch, setShiftSearch] = useState('');
   const [documentSearch, setDocumentSearch] = useState('');
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
-  const [uploadMedia, setUploadMedia] = useState<PickedMedia | null>(null);
+  const [uploadMediaList, setUploadMediaList] = useState<PickedMedia[]>([]);
   const [isAddSalaryModalVisible, setIsAddSalaryModalVisible] = useState(false);
   const [isAddBonusModalVisible, setIsAddBonusModalVisible] = useState(false);
   const [isAssignShiftModalVisible, setIsAssignShiftModalVisible] =
     useState(false);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [isMonthlyFilterModalVisible, setIsMonthlyFilterModalVisible] =
+    useState(false);
 
   const [profile, setProfile] = useState<ProfileInfo>(EMPTY_PROFILE);
   const [stats, setStats] = useState<InfoStatCardData[]>(EMPTY_STATS);
+  const [rating, setRating] = useState(4.9);
+  const [ratingCaption, setRatingCaption] = useState(
+    'Top 4% of your department',
+  );
   const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary>({
     present: 0,
     absent: 0,
@@ -465,13 +522,53 @@ export function useStaffOverviewController(): StaffOverviewController {
 
       setProfile(mapProfile(staff));
 
+      // Prefer actual rating values from API when present.
+      // Fallback to the existing default so UI never breaks.
+      const rawRating =
+        pickNumber(staff, [
+          'customer_rating',
+          'rating',
+          'performance_rating',
+          'performanceRating',
+          'customerRating',
+        ]) ?? 4.9;
+      const clampedRating = Math.max(0, Math.min(5, Number(rawRating) || 4.9));
+      setRating(clampedRating);
+      setRatingCaption(
+        clampedRating >= 4.7
+          ? 'Top 4% of your department'
+          : clampedRating >= 4.2
+            ? 'Above average'
+            : clampedRating >= 3.6
+              ? 'Average'
+              : 'Needs improvement',
+      );
+
       const year = selectedYear;
       const monthIndex = selectedMonthIndex;
       const counts = applyAttendanceRows(attendanceRows, year, monthIndex);
 
       const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
-      const mappedShifts = shiftRows.map(mapShiftItem);
+      const shiftMonthFiltered = shiftRows.filter(item => {
+        const row = asRecord(item);
+        const rawDate = pickString(row, [
+          'effective_from',
+          'effectiveFrom',
+          'assigned_from',
+          'start_date',
+          'date',
+          'created_at',
+        ]);
+        const dt = parseDate(rawDate);
+        if (!dt) {
+          // If API doesn't return an effective date, keep the shift visible.
+          return true;
+        }
+        return dt.getFullYear() === selectedYear && dt.getMonth() === selectedMonthIndex;
+      });
+
+      const mappedShifts = shiftMonthFiltered.map(mapShiftItem);
       setAllShiftItems(mappedShifts);
 
       const mappedSalaries = salaryRows.map(mapSalaryRow);
@@ -624,23 +721,46 @@ export function useStaffOverviewController(): StaffOverviewController {
   );
   const salaryRows = useMemo(() => {
     const query = salarySearch.trim().toLowerCase();
+    const monthLower = attendanceMonth.toLowerCase();
+    const yearStr = String(selectedYear);
+
+    const monthFiltered = allSalaryRows.filter(row => {
+      const m = row.month.toLowerCase();
+      if (!m.includes(monthLower)) {
+        return false;
+      }
+      // If API row includes an explicit year, enforce it; otherwise only match month.
+      const hasYear = /\b\d{4}\b/.test(row.month);
+      if (hasYear) {
+        return row.month.includes(yearStr);
+      }
+      return true;
+    });
+
     if (!query) {
-      return allSalaryRows;
+      return monthFiltered;
     }
-    return allSalaryRows.filter(row => row.month.toLowerCase().includes(query));
-  }, [allSalaryRows, salarySearch]);
+    return monthFiltered.filter(row => row.month.toLowerCase().includes(query));
+  }, [allSalaryRows, salarySearch, attendanceMonth, selectedYear]);
 
   const bonusItems = useMemo(() => {
     const query = bonusSearch.trim().toLowerCase();
+    const mm = String(selectedMonthIndex + 1).padStart(2, '0');
+    const yearPrefix = `${selectedYear}-${mm}`;
+
+    const monthFiltered = allBonusItems.filter(item =>
+      item.meta.startsWith(yearPrefix),
+    );
+
     if (!query) {
-      return allBonusItems;
+      return monthFiltered;
     }
-    return allBonusItems.filter(
+    return monthFiltered.filter(
       item =>
         item.title.toLowerCase().includes(query) ||
         item.meta.toLowerCase().includes(query),
     );
-  }, [allBonusItems, bonusSearch]);
+  }, [allBonusItems, bonusSearch, selectedMonthIndex, selectedYear]);
 
   const shiftItems = useMemo(() => {
     const query = shiftSearch.trim().toLowerCase();
@@ -666,38 +786,77 @@ export function useStaffOverviewController(): StaffOverviewController {
     );
   }, [documentSearch]);
 
-  const onDownloadPress = useCallback(() => {}, []);
+  const exportTextFile = useCallback(
+    async (filename: string, mimeType: string, content: string) => {
+      const url = `data:${mimeType};charset=utf-8,${encodeURIComponent(content)}`;
+      try {
+        await Linking.openURL(url);
+        showMessage({message: `${filename} exported`, type: 'success'});
+      } catch {
+        showMessage({
+          message: 'Download failed on this device',
+          type: 'danger',
+        });
+      }
+    },
+    [],
+  );
+
+  const onDownloadPress = useCallback(() => {
+    const text = [
+      `Profile Export`,
+      `Generated: ${new Date().toISOString()}`,
+      ``,
+      `Name: ${profile.name}`,
+      `Title: ${profile.title}`,
+      `Employee ID: ${profile.employeeId}`,
+      ``,
+      `Emergency Contact: ${profile.emergencyName}`,
+      `Emergency Phone: ${profile.emergencyPhone}`,
+      ``,
+      `Attendance: ${attendanceLegend.present} present · ${attendanceLegend.absent} absent · ${attendanceLegend.leave} leave`,
+      `Salary YTD: ${salaryYtd}`,
+      `Bonuses Total: ${bonusTotal}`,
+    ].join('\n');
+
+    void exportTextFile('staff_profile.txt', 'text/plain', text);
+  }, [attendanceLegend.absent, attendanceLegend.leave, attendanceLegend.present, bonusTotal, exportTextFile, profile, salaryYtd]);
   const onUploadDocumentPress = useCallback(() => {
-    setUploadMedia(null);
+    setUploadMediaList([]);
     setIsUploadModalVisible(true);
   }, []);
   const onCloseUploadModal = useCallback(() => {
     setIsUploadModalVisible(false);
-    setUploadMedia(null);
+    setUploadMediaList([]);
   }, []);
   const onPickUploadDocument = useCallback(async () => {
-    const media = await pickFromGallery();
-    if (!media) {
+    const picked = await pickMultipleFromGallery();
+    if (!picked.length) {
       return;
     }
-    setUploadMedia(media);
+    setUploadMediaList(current => [...current, ...picked]);
   }, []);
   const onConfirmUploadPress = useCallback(async () => {
-    if (!uploadMedia) {
-      showMessage({message: 'Select a file first', type: 'warning'});
+    if (!uploadMediaList.length) {
+      showMessage({message: 'Select at least one photo', type: 'warning'});
       return;
     }
     setIsSubmittingAction(true);
     try {
-      await staffManagementStaffService.uploadDocuments(
-        employeeId,
-        createMediaFormData('document', uploadMedia, {
-          type: 'other',
-        }),
-      );
-      showMessage({message: 'Document uploaded', type: 'success'});
+      for (const media of uploadMediaList) {
+        await staffManagementStaffService.uploadDocuments(
+          employeeId,
+          createMediaFormData('document', media, {
+            type: 'other',
+          }),
+        );
+      }
+      showMessage({
+        message: `${uploadMediaList.length} document${uploadMediaList.length === 1 ? '' : 's'} uploaded`,
+        type: 'success',
+      });
       setIsUploadModalVisible(false);
-      setUploadMedia(null);
+      setUploadMediaList([]);
       await fetchData();
     } catch (error) {
       showMessage({
@@ -707,13 +866,21 @@ export function useStaffOverviewController(): StaffOverviewController {
     } finally {
       setIsSubmittingAction(false);
     }
-  }, [employeeId, fetchData, uploadMedia]);
+  }, [employeeId, fetchData, uploadMediaList]);
   const onBackPress = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
   const onAddSalaryPress = useCallback(() => {
     setIsAddSalaryModalVisible(true);
+  }, []);
+
+  const onOpenMonthlyFilterPress = useCallback(() => {
+    setIsMonthlyFilterModalVisible(true);
+  }, []);
+
+  const onCloseMonthlyFilterModal = useCallback(() => {
+    setIsMonthlyFilterModalVisible(false);
   }, []);
   const onCloseAddSalaryModal = useCallback(() => {
     setIsAddSalaryModalVisible(false);
@@ -885,8 +1052,8 @@ export function useStaffOverviewController(): StaffOverviewController {
     userName: userName || 'User',
     dateLabel: todayLabel(),
     stats,
-    rating: 4.9,
-    ratingCaption: 'Top 4% of your department',
+    rating,
+    ratingCaption,
     profile,
     tabs: TABS,
     activeTab,
@@ -918,7 +1085,11 @@ export function useStaffOverviewController(): StaffOverviewController {
     documentItems,
     documentSearch,
     isUploadModalVisible,
-    uploadFileName: uploadMedia?.name ?? null,
+    uploadFileName: formatMediaSelectionLabel(uploadMediaList),
+    uploadCount: uploadMediaList.length,
+    isMonthlyFilterModalVisible,
+    onOpenMonthlyFilterPress,
+    onCloseMonthlyFilterModal,
     isAddSalaryModalVisible,
     isAddBonusModalVisible,
     isAssignShiftModalVisible,

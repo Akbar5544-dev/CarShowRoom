@@ -39,6 +39,8 @@ export type ActivityItem = {
   time: string;
   icon: IconName;
   tone: OverviewTone;
+  /** When set, tapping opens this detail tab. */
+  actionTab?: VehicleDetailTabId;
 };
 export type StatCard = {
   label: string;
@@ -54,7 +56,13 @@ export type MaintenanceRow = {
   odometer: string;
   cost: string;
 };
-export type RentalRow = {id: string; start: string; end: string; days: string};
+export type RentalRow = {
+  id: string;
+  customer: string;
+  start: string;
+  end: string;
+  days: string;
+};
 export type DocumentItem = {
   id: string;
   title: string;
@@ -104,6 +112,7 @@ export type VehicleDetailController = {
   isCalendarPickerVisible: boolean;
   isUploadModalVisible: boolean;
   uploadFileName: string | null;
+  uploadCount: number;
   isUploadSubmitting: boolean;
   setActiveTab: (tab: VehicleDetailTabId) => void;
   onBackPress: () => void;
@@ -115,6 +124,7 @@ export type VehicleDetailController = {
   onConfirmUploadPress: () => void;
   onNewRentalPress: () => void;
   onNewServicePress: () => void;
+  onActivityPress: (item: ActivityItem) => void;
   onPrevCalendarMonth: () => void;
   onNextCalendarMonth: () => void;
   onOpenCalendarPicker: () => void;

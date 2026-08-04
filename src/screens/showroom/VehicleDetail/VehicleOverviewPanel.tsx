@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {Icon} from '../../../components';
 import {type AppColors, useThemedStyles, useThemeColors} from '../../../theme';
 import type {
@@ -23,6 +23,7 @@ type VehicleOverviewPanelProps = {
   activities: ActivityItem[];
   quickStats: StatCard[];
   purchaseSummary: SpecItem[];
+  onActivityPress?: (item: ActivityItem) => void;
 };
 
 export const VehicleOverviewPanel = memo(function VehicleOverviewPanel({
@@ -31,6 +32,7 @@ export const VehicleOverviewPanel = memo(function VehicleOverviewPanel({
   activities,
   quickStats,
   purchaseSummary,
+  onActivityPress,
 }: VehicleOverviewPanelProps) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
@@ -68,8 +70,16 @@ export const VehicleOverviewPanel = memo(function VehicleOverviewPanel({
       <View style={styles.activityList}>
         {activities.map(item => {
           const tone = TONE_STYLES[item.tone];
+          const clickable = Boolean(item.actionTab && onActivityPress);
           return (
-            <View key={item.id} style={styles.activityCard}>
+            <Pressable
+              key={item.id}
+              style={({pressed}) => [
+                styles.activityCard,
+                clickable && pressed && styles.activityCardPressed,
+              ]}
+              disabled={!clickable}
+              onPress={() => onActivityPress?.(item)}>
               <View style={[styles.activityIconWrap, {backgroundColor: tone.bg}]}>
                 <Icon name={item.icon} size={13} color={tone.color} />
               </View>
@@ -77,22 +87,29 @@ export const VehicleOverviewPanel = memo(function VehicleOverviewPanel({
                 <Text style={styles.activityTitle}>{item.title}</Text>
                 <Text style={styles.activityTime}>{item.time}</Text>
               </View>
-            </View>
+              {clickable ? (
+                <Icon name="profileArrow" size={12} color={colors.textSoft} />
+              ) : null}
+            </Pressable>
           );
         })}
       </View>
 
-      <View style={styles.statsList}>
+      <View style={styles.statsGrid}>
         {quickStats.map(stat => {
           const tone = TONE_STYLES[stat.tone];
           return (
             <View key={stat.label} style={styles.statCard}>
               <View style={[styles.statIconWrap, {backgroundColor: tone.bg}]}>
-                <Icon name={stat.icon} size={15} color={tone.color} />
+                <Icon name={stat.icon} size={14} color={tone.color} />
               </View>
               <View style={styles.statCopy}>
-                <Text style={styles.statLabel}>{stat.label.toUpperCase()}</Text>
-                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel} numberOfLines={1}>
+                  {stat.label.toUpperCase()}
+                </Text>
+                <Text style={styles.statValue} numberOfLines={1}>
+                  {stat.value}
+                </Text>
               </View>
             </View>
           );
@@ -224,6 +241,10 @@ function createStyles(c: AppColors) {
       shadowRadius: 6,
       elevation: 1,
     },
+    activityCardPressed: {
+      opacity: 0.88,
+      borderColor: c.actionTint15,
+    },
     activityIconWrap: {
       width: 38,
       height: 38,
@@ -242,14 +263,19 @@ function createStyles(c: AppColors) {
       fontSize: 10,
       color: c.textSoft,
     },
-    statsList: {gap: 8},
-    statCard: {
+    statsGrid: {
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: 14,
-      paddingHorizontal: 16,
-      paddingVertical: 15,
-      borderRadius: 20,
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    statCard: {
+      width: '31.5%',
+      flexGrow: 1,
+      minWidth: '30%',
+      gap: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 14,
+      borderRadius: 18,
       backgroundColor: c.surface,
       borderWidth: 0.75,
       borderColor: c.borderSoft,
@@ -260,24 +286,24 @@ function createStyles(c: AppColors) {
       elevation: 2,
     },
     statIconWrap: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    statCopy: {flex: 1, gap: 2},
+    statCopy: {gap: 3},
     statLabel: {
-      fontSize: 9,
+      fontSize: 8,
       fontWeight: '700',
       color: c.textSoft,
-      letterSpacing: 0.45,
+      letterSpacing: 0.35,
     },
     statValue: {
-      fontSize: 21,
+      fontSize: 15,
       fontWeight: '700',
       color: c.textDark,
-      letterSpacing: -0.5,
+      letterSpacing: -0.3,
     },
     purchaseCard: {
       borderRadius: 20,

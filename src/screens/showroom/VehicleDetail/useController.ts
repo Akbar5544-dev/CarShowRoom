@@ -6,8 +6,9 @@ import {showMessage} from 'react-native-flash-message';
 import {getApiErrorMessage} from '../../../api';
 import type {VehiclesStackParamList} from '../../../navigation/types';
 import {vehicleManagementVehiclesService} from '../../../services';
-import {createMediaFormData, pickFromGallery} from '../../../utils/mediaPicker';
+import {createMediaFormData, formatMediaSelectionLabel, pickMultipleFromGallery, type PickedMedia} from '../../../utils/mediaPicker';
 import type {
+  ActivityItem,
   CalendarDayStatus,
   VehicleDetailController,
   VehicleDetailRouteParams,
@@ -76,8 +77,7 @@ export function useVehicleDetailController(): VehicleDetailController {
 
   const [activeTab, setActiveTab] = useState<VehicleDetailTabId>('overview');
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
-  const [uploadFileName, setUploadFileName] = useState<string | null>(null);
-  const [uploadMedia, setUploadMedia] = useState<Awaited<ReturnType<typeof pickFromGallery>>>(null);
+  const [uploadMediaList, setUploadMediaList] = useState<PickedMedia[]>([]);
   const [isUploadSubmitting, setIsUploadSubmitting] = useState(false);
   const [calendarMonthDate, setCalendarMonthDate] = useState(
     () => new Date(2026, 6, 1),
@@ -162,6 +162,12 @@ export function useVehicleDetailController(): VehicleDetailController {
     showMessage({message: 'New service coming soon', type: 'info'});
   }, []);
 
+  const onActivityPress = useCallback((item: ActivityItem) => {
+    if (item.actionTab) {
+      setActiveTab(item.actionTab);
+    }
+  }, []);
+
   const onUploadDocumentPress = useCallback(() => {
     setIsUploadModalVisible(true);
   }, []);
@@ -169,33 +175,36 @@ export function useVehicleDetailController(): VehicleDetailController {
   const onCloseUploadModal = useCallback(() => {
     if (!isUploadSubmitting) {
       setIsUploadModalVisible(false);
-      setUploadFileName(null);
-      setUploadMedia(null);
+      setUploadMediaList([]);
     }
   }, [isUploadSubmitting]);
 
   const onPickUploadDocument = useCallback(async () => {
-    const picked = await pickFromGallery();
-    if (picked?.name) {
-      setUploadFileName(picked.name);
-      setUploadMedia(picked);
+    const picked = await pickMultipleFromGallery();
+    if (!picked.length) {
+      return;
     }
+    setUploadMediaList(current => [...current, ...picked]);
   }, []);
 
   const onConfirmUploadPress = useCallback(async () => {
-    if (!uploadMedia || !params.vehicleId) {
+    if (!uploadMediaList.length || !params.vehicleId) {
       return;
     }
     setIsUploadSubmitting(true);
     try {
-      await vehicleManagementVehiclesService.uploadDocuments(
-        params.vehicleId,
-        createMediaFormData('document', uploadMedia, {type: 'general'}),
-      );
+      for (const media of uploadMediaList) {
+        await vehicleManagementVehiclesService.uploadDocuments(
+          params.vehicleId,
+          createMediaFormData('document', media, {type: 'general'}),
+        );
+      }
       setIsUploadModalVisible(false);
-      setUploadFileName(null);
-      setUploadMedia(null);
-      showMessage({message: 'Document uploaded successfully', type: 'success'});
+      setUploadMediaList([]);
+      showMessage({
+        message: `${uploadMediaList.length} document${uploadMediaList.length === 1 ? '' : 's'} uploaded successfully`,
+        type: 'success',
+      });
     } catch (error) {
       showMessage({
         message: getApiErrorMessage(error, 'Failed to upload document'),
@@ -204,7 +213,7 @@ export function useVehicleDetailController(): VehicleDetailController {
     } finally {
       setIsUploadSubmitting(false);
     }
-  }, [params.vehicleId, uploadMedia]);
+  }, [params.vehicleId, uploadMediaList]);
 
   const onPrevCalendarMonth = useCallback(() => {
     setCalendarMonthDate(current => {
@@ -357,10 +366,34 @@ export function useVehicleDetailController(): VehicleDetailController {
       },
     ],
     rentalRows: apiData.rentalRows.length ? apiData.rentalRows : [
-      {id: '1', start: 'Jul 10, 2026', end: 'Jul 15, 2026', days: '5'},
-      {id: '2', start: 'Jun 28, 2026', end: 'Jul 02, 2026', days: '4'},
-      {id: '3', start: 'Jun 12, 2026', end: 'Jun 16, 2026', days: '4'},
-      {id: '4', start: 'May 30, 2026', end: 'Jun 04, 2026', days: '5'},
+      {
+        id: '1',
+        customer: 'Ayesha Khan',
+        start: 'Jul 10, 2026',
+        end: 'Jul 15, 2026',
+        days: '5',
+      },
+      {
+        id: '2',
+        customer: 'Hassan Ali',
+        start: 'Jun 28, 2026',
+        end: 'Jul 02, 2026',
+        days: '4',
+      },
+      {
+        id: '3',
+        customer: 'Sara Ahmed',
+        start: 'Jun 12, 2026',
+        end: 'Jun 16, 2026',
+        days: '4',
+      },
+      {
+        id: '4',
+        customer: 'Bilal Raza',
+        start: 'May 30, 2026',
+        end: 'Jun 04, 2026',
+        days: '5',
+      },
     ],
     documents: apiData.documents.length ? apiData.documents : [
       {
@@ -464,7 +497,8 @@ export function useVehicleDetailController(): VehicleDetailController {
     calendarScheduleRows: CALENDAR_SCHEDULE_ROWS,
     isCalendarPickerVisible,
     isUploadModalVisible,
-    uploadFileName,
+    uploadFileName: formatMediaSelectionLabel(uploadMediaList),
+    uploadCount: uploadMediaList.length,
     isUploadSubmitting,
     setActiveTab,
     onBackPress,
@@ -476,6 +510,7 @@ export function useVehicleDetailController(): VehicleDetailController {
     onConfirmUploadPress,
     onNewRentalPress,
     onNewServicePress,
+    onActivityPress,
     onPrevCalendarMonth,
     onNextCalendarMonth,
     onOpenCalendarPicker,

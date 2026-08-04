@@ -5,6 +5,10 @@ export const API_BASE_URL =
 
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
+  /** Active showroom/admin Sanctum token */
+  SHOWROOM_TOKEN: 'showroom_auth_token',
+  /** Active customer / public Sanctum token */
+  CUSTOMER_TOKEN: 'customer_auth_token',
   USER: 'user',
   /** Role picked at sign up / login for the active session. */
   AUTH_ROLE: 'auth_role',

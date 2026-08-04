@@ -2,7 +2,7 @@ import type {IconName} from '../../../assets/iconXml';
 import type {RentalVehicleSummary} from '../../../components/RentalVehicleSummaryCard';
 import type {RentalWizardStep} from '../../../components/RentalWizardStepper';
 
-export type RentalVehicleStepId = 0 | 1 | 2 | 3 | 4 | 5;
+export type RentalVehicleStepId = 0 | 1 | 2;
 
 export type RentalCustomerTier = 'Gold' | 'Platinum' | 'Silver';
 

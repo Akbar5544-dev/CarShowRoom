@@ -7,7 +7,7 @@ import type {
 } from '../api';
 
 export const authService = {
-  async register(body: AuthRegisterPayload) {
+  async register(body: AuthRegisterPayload | FormData) {
     const {data} = await apiClient.post<ApiSuccess<AuthLoginData>>(
       endpoints.auth.register,
       body,

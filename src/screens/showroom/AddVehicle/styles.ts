@@ -142,10 +142,18 @@ export const createStyles = (colors: AppColors) =>
       borderWidth: 0.75,
       borderColor: colors.borderSoft,
     },
+    tagActive: {
+      backgroundColor: colors.actionTint12,
+      borderColor: colors.actionBlue,
+    },
     tagText: {
       fontSize: 8.5,
       fontWeight: '500',
       color: colors.textSoft,
+    },
+    tagTextActive: {
+      color: colors.actionBlue,
+      fontWeight: '700',
     },
     infoBox: {
       borderRadius: 14,

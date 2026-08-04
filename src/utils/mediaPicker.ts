@@ -15,6 +15,12 @@ export type PickedMedia = {
 
 const DEFAULT_LIBRARY_OPTIONS: ImageLibraryOptions = {
   mediaType: 'photo',
+  selectionLimit: 0,
+  quality: 0.8,
+};
+
+const SINGLE_LIBRARY_OPTIONS: ImageLibraryOptions = {
+  mediaType: 'photo',
   selectionLimit: 1,
   quality: 0.8,
 };
@@ -50,13 +56,42 @@ export async function pickFromGallery(
   options?: ImageLibraryOptions,
 ): Promise<PickedMedia | null> {
   const result = await launchImageLibrary({
-    ...DEFAULT_LIBRARY_OPTIONS,
+    ...SINGLE_LIBRARY_OPTIONS,
     ...options,
   });
   if (result.didCancel || result.errorCode) {
     return null;
   }
   return assetToMedia(result.assets?.[0]);
+}
+
+/** Pick one or more photos from the gallery. selectionLimit 0 = unlimited. */
+export async function pickMultipleFromGallery(
+  options?: ImageLibraryOptions,
+): Promise<PickedMedia[]> {
+  const result = await launchImageLibrary({
+    ...DEFAULT_LIBRARY_OPTIONS,
+    selectionLimit: 0,
+    ...options,
+  });
+  if (result.didCancel || result.errorCode || !result.assets?.length) {
+    return [];
+  }
+  return result.assets
+    .map(asset => assetToMedia(asset))
+    .filter((item): item is PickedMedia => item != null);
+}
+
+export function formatMediaSelectionLabel(
+  media: PickedMedia[],
+): string | null {
+  if (!media.length) {
+    return null;
+  }
+  if (media.length === 1) {
+    return media[0].name;
+  }
+  return `${media.length} photos selected`;
 }
 
 export async function pickFromCamera(
@@ -87,6 +122,16 @@ export function appendMediaToFormData(
   media: PickedMedia,
 ) {
   formData.append(field, toFormFile(media));
+}
+
+export function appendMultipleMediaToFormData(
+  formData: FormData,
+  field: string,
+  mediaList: PickedMedia[],
+) {
+  mediaList.forEach((media, index) => {
+    appendMediaToFormData(formData, `${field}[${index}]`, media);
+  });
 }
 
 export function createMediaFormData(

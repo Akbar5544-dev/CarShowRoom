@@ -26,6 +26,12 @@ import {
   transmissionLabel,
   unwrapData,
 } from '../../../utils/apiHelpers';
+import {
+  buildFieldErrors,
+  clearFieldError,
+  hasFieldErrors,
+  type FieldErrors,
+} from '../../../utils/formValidation';
 import type {
   NewRentalAddon,
   NewRentalController,
@@ -212,14 +218,102 @@ function parseDateTime(value: string): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+/** Accepts 12:00, 5:55, 05:55, 12:00 AM, 5:55 PM */
+function parseTimeParts(
+  timeValue: string,
+): {hours: number; minutes: number} | null {
+  const trimmed = timeValue.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) {
+    return null;
+  }
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || minutes > 59) {
+    return null;
+  }
+  const meridiem = match[3]?.toUpperCase();
+  if (meridiem) {
+    if (hours < 1 || hours > 12) {
+      return null;
+    }
+    if (meridiem === 'PM' && hours < 12) {
+      hours += 12;
+    }
+    if (meridiem === 'AM' && hours === 12) {
+      hours = 0;
+    }
+  } else if (hours > 23) {
+    return null;
+  }
+  return {hours, minutes};
+}
+
+/** Keep only mm/dd/yyyy from a date field that may still include time. */
+function stripDateOnly(dateValue: string): string {
+  const match = dateValue.trim().match(/^(\d{1,2}\/\d{1,2}\/\d{4})/);
+  return match ? match[1] : dateValue.trim();
+}
+
+/** If date field still has embedded time, pull it out. */
+function extractEmbeddedTime(dateValue: string): string | null {
+  const match = dateValue
+    .trim()
+    .match(/,\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i);
+  return match ? match[1].replace(/\s+/g, ' ').trim() : null;
+}
+
 function toIsoDay(value: string): string | undefined {
-  const parsed = parseDateTime(value);
+  const parsed = parseDateTime(stripDateOnly(value));
   if (!parsed) {
     return undefined;
   }
   const mm = String(parsed.getMonth() + 1).padStart(2, '0');
   const dd = String(parsed.getDate()).padStart(2, '0');
   return `${parsed.getFullYear()}-${mm}-${dd}`;
+}
+
+function toIsoDateTime(dateValue: string, timeValue: string): string | undefined {
+  const dateOnly = stripDateOnly(dateValue);
+  const timeOnly =
+    timeValue.trim() || extractEmbeddedTime(dateValue) || '';
+  if (!dateOnly || !timeOnly) {
+    return undefined;
+  }
+  const timeParts = parseTimeParts(timeOnly);
+  if (!timeParts) {
+    return undefined;
+  }
+  const dateMatch = dateOnly.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!dateMatch) {
+    return undefined;
+  }
+  const [, m, d, y] = dateMatch;
+  const parsed = new Date(
+    Number(y),
+    Number(m) - 1,
+    Number(d),
+    timeParts.hours,
+    timeParts.minutes,
+    0,
+    0,
+  );
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+function combineDateTimeInputs(date: string, time: string): string {
+  const d = stripDateOnly(date);
+  const t = time.trim() || extractEmbeddedTime(date) || '';
+  if (!d) {
+    return '';
+  }
+  if (!t) {
+    return d;
+  }
+  return `${d}, ${t}`;
 }
 
 const INITIAL_FORM: NewRentalForm = {
@@ -229,7 +323,9 @@ const INITIAL_FORM: NewRentalForm = {
   license: '',
   address: '',
   pickupDate: '',
+  pickupTime: '',
   returnDate: '',
+  returnTime: '',
   pickupLocation: '',
   dropoffLocation: '',
   promoCode: '',
@@ -295,6 +391,7 @@ export function useNewRentalController(): NewRentalController {
   const [existingCustomerId, setExistingCustomerId] = useState<string | null>(
     null,
   );
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const loadVehicles = useCallback(
     (options: {silent?: boolean}) => {
@@ -351,8 +448,8 @@ export function useNewRentalController(): NewRentalController {
   }, [rentalsCache.raw]);
 
   const totals = useMemo(() => {
-    const pickup = parseDateTime(form.pickupDate);
-    const dropoff = parseDateTime(form.returnDate);
+    const pickup = parseDateTime(combineDateTimeInputs(form.pickupDate, form.pickupTime));
+    const dropoff = parseDateTime(combineDateTimeInputs(form.returnDate, form.returnTime));
     const days =
       pickup && dropoff
         ? Math.max(
@@ -391,7 +488,26 @@ export function useNewRentalController(): NewRentalController {
 
   const setField = useCallback(
     <K extends keyof NewRentalForm>(key: K, value: NewRentalForm[K]) => {
-      setForm(prev => ({...prev, [key]: value}));
+      setForm(prev => {
+        if (key === 'pickupDate' && typeof value === 'string') {
+          const embedded = extractEmbeddedTime(value);
+          return {
+            ...prev,
+            pickupDate: stripDateOnly(value),
+            pickupTime: prev.pickupTime.trim() || embedded || prev.pickupTime,
+          };
+        }
+        if (key === 'returnDate' && typeof value === 'string') {
+          const embedded = extractEmbeddedTime(value);
+          return {
+            ...prev,
+            returnDate: stripDateOnly(value),
+            returnTime: prev.returnTime.trim() || embedded || prev.returnTime,
+          };
+        }
+        return {...prev, [key]: value};
+      });
+      setFieldErrors(prev => clearFieldError(prev, key));
     },
     [],
   );
@@ -405,6 +521,12 @@ export function useNewRentalController(): NewRentalController {
     const index = list.findIndex(item => item.id === existingCustomerId);
     const next = list[(index + 1) % list.length];
     setExistingCustomerId(next.id);
+    setFieldErrors(prev => {
+      const nextErrors = {...prev};
+      delete nextErrors.customerName;
+      delete nextErrors.phone;
+      return nextErrors;
+    });
     setForm(prev => ({
       ...prev,
       customerName: next.name,
@@ -426,6 +548,7 @@ export function useNewRentalController(): NewRentalController {
 
   const onSelectVehicle = useCallback((id: string) => {
     setSelectedVehicleId(id);
+    setFieldErrors(prev => clearFieldError(prev, 'vehicle'));
   }, []);
 
   const onToggleAddon = useCallback((id: string) => {
@@ -445,50 +568,130 @@ export function useNewRentalController(): NewRentalController {
   const onSelectPaymentMethod = useCallback(
     (id: NewRentalPaymentMethodId) => {
       setSelectedPaymentMethodId(id);
+      setFieldErrors(prev => {
+        const next = {...prev};
+        delete next.cardholder;
+        delete next.cardNumber;
+        delete next.expiry;
+        delete next.cvv;
+        return next;
+      });
     },
     [],
   );
 
   const onToggleTerms = useCallback(() => {
     setTermsAccepted(prev => !prev);
+    setFieldErrors(prev => clearFieldError(prev, 'terms'));
   }, []);
+
+  const validateStep = useCallback(
+    (step: NewRentalStepId): boolean => {
+      let errors: FieldErrors = {};
+      if (step === 0) {
+        errors = buildFieldErrors([
+          {key: 'customerName', value: form.customerName, label: 'Full name'},
+          {key: 'phone', value: form.phone, label: 'Phone'},
+        ]);
+      } else if (step === 1) {
+        if (!selectedVehicleId.trim()) {
+          errors.vehicle = 'Please select a vehicle';
+        }
+      } else if (step === 2) {
+        const pickupDate = stripDateOnly(form.pickupDate);
+        const returnDate = stripDateOnly(form.returnDate);
+        const pickupTime =
+          form.pickupTime.trim() ||
+          extractEmbeddedTime(form.pickupDate) ||
+          '';
+        const returnTime =
+          form.returnTime.trim() ||
+          extractEmbeddedTime(form.returnDate) ||
+          '';
+
+        errors = buildFieldErrors([
+          {key: 'pickupDate', value: pickupDate, label: 'Pickup date'},
+          {key: 'pickupTime', value: pickupTime, label: 'Pickup time'},
+          {key: 'returnDate', value: returnDate, label: 'Return date'},
+          {key: 'returnTime', value: returnTime, label: 'Return time'},
+        ]);
+        if (!errors.pickupDate && !toIsoDay(pickupDate)) {
+          errors.pickupDate = 'Enter a valid pickup date';
+        }
+        if (!errors.pickupTime && !parseTimeParts(pickupTime)) {
+          errors.pickupTime = 'Enter a valid pickup time';
+        }
+        if (!errors.returnDate && !toIsoDay(returnDate)) {
+          errors.returnDate = 'Enter a valid return date';
+        }
+        if (!errors.returnTime && !parseTimeParts(returnTime)) {
+          errors.returnTime = 'Enter a valid return time';
+        }
+
+        // Keep form fields clean: date-only + separate time
+        if (!hasFieldErrors(errors)) {
+          setForm(prev => ({
+            ...prev,
+            pickupDate,
+            pickupTime,
+            returnDate,
+            returnTime,
+          }));
+        }
+      } else if (step === 4 && selectedPaymentMethodId === 'card') {
+        errors = buildFieldErrors([
+          {key: 'cardholder', value: form.cardholder, label: 'Cardholder name'},
+          {key: 'cardNumber', value: form.cardNumber, label: 'Card number'},
+          {key: 'expiry', value: form.expiry, label: 'Expiry'},
+          {key: 'cvv', value: form.cvv, label: 'CVV'},
+        ]);
+      } else if (step === 5) {
+        if (!termsAccepted) {
+          errors.terms = 'Please accept the rental agreement';
+        }
+        if (!form.signature.trim()) {
+          errors.signature = 'Signature is required';
+        }
+      }
+      setFieldErrors(errors);
+      return !hasFieldErrors(errors);
+    },
+    [form, selectedPaymentMethodId, selectedVehicleId, termsAccepted],
+  );
 
   const submitRental = useCallback(async () => {
     if (submitting) {
       return;
     }
-    if (!form.customerName.trim() || !form.phone.trim()) {
-      showMessage({
-        message: 'Customer name and phone are required',
-        type: 'danger',
-      });
+    if (!validateStep(0)) {
       setCurrentStep(0);
       return;
     }
-    if (!selectedVehicle) {
-      showMessage({message: 'Please select a vehicle', type: 'danger'});
+    if (!validateStep(1)) {
       setCurrentStep(1);
       return;
     }
-    const startDate = toIsoDay(form.pickupDate);
-    const endDate = toIsoDay(form.returnDate);
-    if (!startDate || !endDate) {
-      showMessage({
-        message: 'Please enter valid pickup and return dates',
-        type: 'danger',
-      });
+    if (!validateStep(2)) {
       setCurrentStep(2);
       return;
     }
-    if (!termsAccepted) {
-      showMessage({
-        message: 'Please accept the rental agreement to continue',
-        type: 'danger',
-      });
+    if (!validateStep(5)) {
+      setCurrentStep(5);
       return;
     }
-    if (!form.signature.trim()) {
-      showMessage({message: 'Please sign with the full name', type: 'danger'});
+    if (!selectedVehicle) {
+      setCurrentStep(1);
+      return;
+    }
+
+    const startDateTime = toIsoDateTime(form.pickupDate, form.pickupTime);
+    const endDateTime = toIsoDateTime(form.returnDate, form.returnTime);
+    if (!startDateTime || !endDateTime) {
+      showMessage({
+        message: 'Please enter valid pickup and return date/time',
+        type: 'danger',
+      });
+      setCurrentStep(2);
       return;
     }
 
@@ -513,8 +716,8 @@ export function useNewRentalController(): NewRentalController {
       await vehicleRentalRentalsService.createRentals({
         vehicle_id: selectedVehicle.id,
         customer_id: customerId,
-        start_date: startDate,
-        expected_return_date: endDate,
+        start_date: startDateTime,
+        expected_return_date: endDateTime,
         daily_rate: selectedVehicle.dailyRate,
         pickup_location: form.pickupLocation,
         dropoff_location: form.dropoffLocation,
@@ -543,18 +746,23 @@ export function useNewRentalController(): NewRentalController {
     selectedPaymentMethodId,
     selectedVehicle,
     submitting,
-    termsAccepted,
+    validateStep,
   ]);
 
   const onNextPress = useCallback(() => {
+    if (!validateStep(currentStep)) {
+      return;
+    }
     if (currentStep === 5) {
       submitRental();
       return;
     }
+    setFieldErrors({});
     setCurrentStep(step => (step + 1) as NewRentalStepId);
-  }, [currentStep, submitRental]);
+  }, [currentStep, submitRental, validateStep]);
 
   const onPreviousPress = useCallback(() => {
+    setFieldErrors({});
     setCurrentStep(step => (step > 0 ? ((step - 1) as NewRentalStepId) : step));
   }, []);
 
@@ -581,6 +789,7 @@ export function useNewRentalController(): NewRentalController {
     totals,
     submitting,
     setField,
+    fieldErrors,
     onSelectExistingCustomer,
     onSelectVehicle,
     onToggleAddon,

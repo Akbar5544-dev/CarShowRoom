@@ -7,6 +7,7 @@ export type DocumentUploadItem = {
   id: string;
   title: string;
   fileName?: string | null;
+  count?: number;
 };
 
 type DocumentUploadCardProps = {
@@ -20,7 +21,7 @@ export const DocumentUploadCard = memo(function DocumentUploadCard({
 }: DocumentUploadCardProps) {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
-  const selected = Boolean(item.fileName);
+  const selected = Boolean(item.fileName) || (item.count ?? 0) > 0;
   return (
     <Pressable
       style={[styles.card, selected && styles.cardSelected]}
@@ -39,8 +40,9 @@ export const DocumentUploadCard = memo(function DocumentUploadCard({
       </Text>
       <Text style={styles.hint} numberOfLines={2}>
         {selected
-          ? item.fileName
-          : 'Click to upload · PDF, JPG, PNG'}
+          ? item.fileName ??
+            `${item.count} photo${item.count === 1 ? '' : 's'} selected`
+          : 'Tap to add photos · multi-select'}
       </Text>
     </Pressable>
   );

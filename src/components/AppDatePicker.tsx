@@ -11,6 +11,7 @@ type AppDatePickerProps = {
   onChange: (date: Date) => void;
   onClose: () => void;
   title?: string;
+  mode?: 'date' | 'time' | 'datetime';
 };
 
 export const AppDatePicker = memo(function AppDatePickerComponent({
@@ -19,6 +20,7 @@ export const AppDatePicker = memo(function AppDatePickerComponent({
   onChange,
   onClose,
   title = 'Select Date',
+  mode = 'date',
 }: AppDatePickerProps) {
   const styles = useThemedStyles(createStyles);
 
@@ -43,7 +45,7 @@ export const AppDatePicker = memo(function AppDatePickerComponent({
     return (
       <DateTimePicker
         value={value}
-        mode="date"
+        mode={mode}
         display="default"
         onChange={handleChange}
       />
@@ -62,7 +64,7 @@ export const AppDatePicker = memo(function AppDatePickerComponent({
           </View>
           <DateTimePicker
             value={value}
-            mode="date"
+            mode={mode}
             display="spinner"
             onChange={handleChange}
           />
