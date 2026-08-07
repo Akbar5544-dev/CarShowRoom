@@ -95,6 +95,12 @@ export function mapInventoryVehicle(
       pickString(row, ['transmission', 'transmission_type'], 'automatic'),
     ) || 'Auto';
   const dailyRate = pickNumber(row, ['rental_daily_rate', 'daily_rate']);
+  const askingPrice = pickNumber(row, [
+    'asking_price',
+    'purchase_price',
+    'sale_price',
+    'price',
+  ]);
 
   return {
     id: String(row.id ?? index),
@@ -116,6 +122,10 @@ export function mapInventoryVehicle(
     seats: seats > 0 ? String(seats) : '—',
     rangeLabel: formatRangeLabel(row),
     dailyRate: formatMoney(dailyRate),
+    askingPrice: askingPrice > 0 ? String(askingPrice) : undefined,
+    isPublished: Boolean(
+      row.is_published ?? row.published ?? row.isPublished,
+    ),
   };
 }
 

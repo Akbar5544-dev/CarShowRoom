@@ -33,6 +33,10 @@ export type VehicleInventoryItem = {
   seats: string;
   rangeLabel: string;
   dailyRate: string;
+  /** Asking / sale price used as auction starting-bid default */
+  askingPrice?: string;
+  /** Whether vehicle is published to public marketplace */
+  isPublished: boolean;
 };
 
 type VehicleInventoryCardProps = {
@@ -121,10 +125,19 @@ export const VehicleInventoryCard = memo(function VehicleInventoryCard({
             <Text style={styles.actionBtnText}>View</Text>
           </Pressable>
           <Pressable
-            style={styles.actionBtn}
+            style={[
+              styles.actionBtn,
+              item.isPublished ? styles.unpostBtn : null,
+            ]}
             onPress={() => onPostPress?.(item)}
             hitSlop={4}>
-            <Text style={styles.actionBtnText}>Post</Text>
+            <Text
+              style={[
+                styles.actionBtnText,
+                item.isPublished ? styles.unpostBtnText : null,
+              ]}>
+              {item.isPublished ? 'Unpost' : 'Post'}
+            </Text>
           </Pressable>
           <Pressable
             style={styles.actionBtn}
@@ -287,6 +300,13 @@ function createStyles(c: AppColors) {
       fontSize: 11,
       fontWeight: '600',
       color: c.textDark,
+    },
+    unpostBtn: {
+      borderColor: '#FECACA',
+      backgroundColor: '#FEF2F2',
+    },
+    unpostBtnText: {
+      color: '#DC2626',
     },
     rentBtn: {
       flexDirection: 'row',

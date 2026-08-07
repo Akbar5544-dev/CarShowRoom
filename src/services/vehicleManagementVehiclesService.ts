@@ -37,4 +37,14 @@ export const vehicleManagementVehiclesService = {
     const {data} = await apiClient.delete(endpoints.vehicleManagementVehicles.deleteDocument(vehicle, document));
     return data;
   },
+  async createAuction(
+    vehicle: string | number,
+    body?: Record<string, unknown> | FormData,
+  ) {
+    const {data} = await apiClient.post(
+      endpoints.vehicleManagementVehicles.createAuction(vehicle),
+      body,
+    );
+    return data;
+  },
 };

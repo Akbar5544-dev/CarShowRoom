@@ -296,29 +296,37 @@ export function mapFuelType(uiValue: string): string | undefined {
   return key || undefined;
 }
 
-/** API uses automatic/manual/cvt (not Auto) */
+/** API accepts: automatic | manual */
 export function mapTransmission(uiValue: string): string | undefined {
   const key = uiValue.trim().toLowerCase();
-  const map: Record<string, string> = {
-    auto: 'automatic',
-    automatic: 'automatic',
-    manual: 'manual',
-    cvt: 'cvt',
-  };
-  return map[key] ?? (key || undefined);
+  if (!key) {
+    return undefined;
+  }
+  if (key.includes('manual')) {
+    return 'manual';
+  }
+  // API enum is only manual | automatic (map CVT/Auto → automatic)
+  return 'automatic';
 }
 
 export function mapVehicleStatus(uiValue: string): string | undefined {
   const key = uiValue.trim().toLowerCase();
+  if (!key) {
+    return 'available';
+  }
   if (key.includes('maint') || key.includes('service')) {
     return 'maintenance';
   }
-  if (key.includes('reserv') || key.includes('rent') || key.includes('book')) {
+  if (key.includes('reserv') || key.includes('book')) {
     return 'reserved';
   }
-  if (key.includes('sold') || key.includes('inactive')) {
-    return 'inactive';
+  if (key.includes('rent')) {
+    return 'rented';
   }
+  if (key.includes('sold')) {
+    return 'sold';
+  }
+  // API enum: available | reserved | sold | rented | maintenance
   return 'available';
 }
 

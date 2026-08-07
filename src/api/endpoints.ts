@@ -63,9 +63,23 @@ export const endpoints = {
     login: '/login',
     getMe: '/me',
     logout: '/logout',
+    forgotPassword: '/forgot-password',
+    verifyResetCode: '/verify-reset-code',
+    resetPassword: '/reset-password',
   },
   dashboard: {
     getDashboard: '/dashboard',
+  },
+  vehicleManagementEnquiries: {
+    listEnquiries: '/enquiries',
+    getEnquiryById: (enquiry: string | number) => `/enquiries/${enquiry}`,
+    replyEnquiry: (enquiry: string | number) => `/enquiries/${enquiry}/reply`,
+    markEnquiryRead: (enquiry: string | number) => `/enquiries/${enquiry}/read`,
+  },
+  settingsStaffProfile: {
+    getProfile: '/profile',
+    updateProfile: '/profile',
+    changePassword: '/profile/change-password',
   },
   jobsworkshop: {
     listJobs: '/jobs',
@@ -298,6 +312,7 @@ export const endpoints = {
     deleteImage: (vehicle: string | number, image: string | number) => `/vehicles/${vehicle}/images/${image}`,
     uploadDocuments: (vehicle: string | number) => `/vehicles/${vehicle}/documents`,
     deleteDocument: (vehicle: string | number, document: string | number) => `/vehicles/${vehicle}/documents/${document}`,
+    createAuction: (vehicle: string | number) => `/vehicles/${vehicle}/auctions`,
   },
   vehicleRentalRentOrders: {
     listRentOrders: '/rent-orders',

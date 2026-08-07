@@ -13,13 +13,11 @@ import {useAppDispatch, useAppSelector} from '../../../store/hooks';
 import {fetchVehicles, invalidateVehicles} from '../../../store/dataCacheSlice';
 import {useSmartFocusFetch} from '../../../hooks/useSmartFocusFetch';
 import {
-  appendMediaToFormData,
   asRecord,
   buildFieldErrors,
   clearFieldError,
   createMediaFormData,
   formatCount,
-  formatMoney,
   fuelTypeLabel,
   hasFieldErrors,
   mapFuelType,
@@ -64,7 +62,16 @@ const STEP_DESCRIPTIONS: Record<number, string | undefined> = {
   5: 'Confirm the vehicle profile before adding it to active inventory.',
 };
 
-const CATEGORIES = ['Executive', 'Luxury', 'SUV', 'Sedan', 'Sports', 'Electric'];
+type CategoryOption = {id?: number; name: string};
+
+const CATEGORIES: CategoryOption[] = [
+  {name: 'Executive'},
+  {name: 'Luxury'},
+  {name: 'SUV'},
+  {name: 'Sedan'},
+  {name: 'Sports'},
+  {name: 'Electric'},
+];
 const IMAGE_SLOTS = [
   {id: 'front', title: 'Front exterior'},
   {id: 'rear', title: 'Rear exterior'},
@@ -130,7 +137,7 @@ export function useAddVehicleController(): AddVehicleController {
   const [form, setForm] = useState<AddVehicleForm>(INITIAL_FORM);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [categories, setCategories] = useState<string[]>(CATEGORIES);
+  const [categories, setCategories] = useState<CategoryOption[]>(CATEGORIES);
   const [specSheet, setSpecSheet] = useState<PickedMedia[]>([]);
   const [insuranceDoc, setInsuranceDoc] = useState<PickedMedia[]>([]);
   const [registrationDoc, setRegistrationDoc] = useState<PickedMedia[]>([]);
@@ -161,14 +168,25 @@ export function useAddVehicleController(): AddVehicleController {
     vehicleManagementCategoriesService
       .listCategories({per_page: 20})
       .then(res => {
-        const names = unwrapList(res)
+        const mapped = unwrapList(res)
           .map(item => {
             const row = asRecord(item);
-            return String(row.name ?? row.title ?? '').trim();
+            const name = String(row.name ?? row.title ?? '').trim();
+            if (!name) {
+              return null;
+            }
+            const idRaw = row.id;
+            const id =
+              typeof idRaw === 'number'
+                ? idRaw
+                : Number.isFinite(Number(idRaw))
+                  ? Number(idRaw)
+                  : undefined;
+            return {id, name} satisfies CategoryOption;
           })
-          .filter(Boolean);
-        if (names.length) {
-          setCategories(names);
+          .filter((item): item is CategoryOption => item != null);
+        if (mapped.length) {
+          setCategories(mapped);
         }
       })
       .catch(() => {});
@@ -277,26 +295,26 @@ export function useAddVehicleController(): AddVehicleController {
     }
     setSubmitting(true);
     try {
+      // Only send fields accepted by POST /vehicles (swagger).
+      // stock_no is server-generated — do not send it.
       const formData = new FormData();
-      appendField(formData, 'stock_no', form.vehicleCode);
       appendField(formData, 'registration_no', form.registrationPlate);
       appendField(formData, 'make', form.make);
       appendField(formData, 'model', form.model);
       appendField(formData, 'year', form.year);
-      appendField(formData, 'category_name', form.category);
-      appendField(formData, 'branch', form.branch);
+      const categoryId = categories.find(
+        option => option.name === form.category,
+      )?.id;
+      if (categoryId != null) {
+        appendField(formData, 'category_id', categoryId);
+      }
       appendField(formData, 'status', mapVehicleStatus(form.status));
       appendField(formData, 'usage_type', 'both');
       appendField(formData, 'condition', 'used');
       appendField(formData, 'description', form.description);
-      appendField(formData, 'engine_type', form.engineType);
-      appendField(formData, 'horsepower', form.horsepower);
       appendField(formData, 'transmission', mapTransmission(form.transmission));
-      appendField(formData, 'drive_type', form.driveType);
       appendField(formData, 'fuel_type', mapFuelType(form.fuelType));
-      appendField(formData, 'battery_capacity', form.batteryTank);
       appendField(formData, 'seating_capacity', form.seats);
-      appendField(formData, 'doors', form.doors);
       appendField(formData, 'mileage', form.mileage);
       appendField(formData, 'color', form.color);
       appendField(
@@ -304,45 +322,14 @@ export function useAddVehicleController(): AddVehicleController {
         'rental_daily_rate',
         parseMoneyInput(form.dailyRate),
       );
-      appendField(formData, 'weekly_rate', parseMoneyInput(form.weeklyRate));
-      appendField(formData, 'monthly_rate', parseMoneyInput(form.monthlyRate));
-      appendField(
-        formData,
-        'security_deposit',
-        parseMoneyInput(form.securityDeposit),
-      );
-      appendField(
-        formData,
-        'extra_km_charge',
-        parseMoneyInput(form.extraKmCharge),
-      );
-      appendField(
-        formData,
-        'late_return_fee',
-        parseMoneyInput(form.lateReturnFee),
-      );
       if (form.weekendSurge) {
         formData.append('features[]', 'Weekend surge 12%');
-        appendField(formData, 'weekend_surge', 1);
-        appendField(formData, 'weekend_surge_percent', 12);
       }
       if (form.vipDiscount) {
         formData.append('features[]', 'VIP discount');
-        appendField(formData, 'vip_discount', 1);
       }
       if (form.taxInclusive) {
         formData.append('features[]', 'Tax inclusive');
-        appendField(formData, 'tax_inclusive', 1);
-      }
-      appendField(formData, 'insurance_provider', form.insuranceProvider);
-      appendField(formData, 'policy_number', form.policyNumber);
-      appendField(formData, 'coverage_type', form.coverageType);
-      appendField(formData, 'insurance_expiry', form.insuranceExpiry);
-      appendField(formData, 'registration_expiry', form.registrationExpiry);
-      appendField(formData, 'ownership', form.ownership);
-
-      if (specSheet.length) {
-        appendMediaToFormData(formData, 'spec_sheet', specSheet[0]);
       }
 
       const created = await vehicleManagementVehiclesService.createVehicles(
@@ -393,8 +380,8 @@ export function useAddVehicleController(): AddVehicleController {
             }
           }
         }
-        if (specSheet.length > 1) {
-          for (const media of specSheet.slice(1)) {
+        if (specSheet.length) {
+          for (const media of specSheet) {
             try {
               await vehicleManagementVehiclesService.uploadDocuments(
                 vehicleId,
@@ -413,14 +400,19 @@ export function useAddVehicleController(): AddVehicleController {
       dispatch(invalidateVehicles());
       navigation.navigate('VehicleList');
     } catch (error) {
+      const apiMessage = getApiErrorMessage(error, 'Failed to add vehicle');
+      const isAuditLogMissing = /audit\.?\s*log/i.test(apiMessage);
       showMessage({
-        message: getApiErrorMessage(error, 'Failed to add vehicle'),
+        message: isAuditLogMissing
+          ? 'Server error: audit log is not configured. Ask backend to add the audit log channel/table.'
+          : apiMessage,
         type: 'danger',
       });
     } finally {
       setSubmitting(false);
     }
   }, [
+    categories,
     dispatch,
     form,
     images,
@@ -540,7 +532,7 @@ export function useAddVehicleController(): AddVehicleController {
     insuranceDocName: formatMediaSelectionLabel(insuranceDoc),
     registrationDocName: formatMediaSelectionLabel(registrationDoc),
     imageUploads,
-    categoryOptions: categories,
+    categoryOptions: categories.map(item => item.name),
     setField,
     fieldErrors,
     togglePricingFlag,

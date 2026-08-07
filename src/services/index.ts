@@ -29,6 +29,7 @@ export {settingsKeyvalueSettingsService} from './settingsKeyvalueSettingsService
 export {settingsLanguagesService} from './settingsLanguagesService';
 export {settingsPublicStorefrontService} from './settingsPublicStorefrontService';
 export {settingsShowroomProfileService} from './settingsShowroomProfileService';
+export {settingsStaffProfileService} from './settingsStaffProfileService';
 export {staffManagementAdvancesService} from './staffManagementAdvancesService';
 export {staffManagementAttendanceService} from './staffManagementAttendanceService';
 export {staffManagementSalariesService} from './staffManagementSalariesService';
@@ -39,6 +40,7 @@ export {superAdminShowroomsService} from './superAdminShowroomsService';
 export {superAdminSubscriptionPlansService} from './superAdminSubscriptionPlansService';
 export {superAdminSubscriptionsService} from './superAdminSubscriptionsService';
 export {vehicleManagementCategoriesService} from './vehicleManagementCategoriesService';
+export {vehicleManagementEnquiriesService} from './vehicleManagementEnquiriesService';
 export {vehicleManagementMaintenanceService} from './vehicleManagementMaintenanceService';
 export {vehicleManagementVehiclesService} from './vehicleManagementVehiclesService';
 export {vehicleRentalRentOrdersService} from './vehicleRentalRentOrdersService';

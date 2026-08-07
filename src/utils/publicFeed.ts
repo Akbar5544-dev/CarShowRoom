@@ -15,10 +15,49 @@ import {
 function listingTypeFromRow(row: AnyRecord): ListingType {
   const usage = pickString(
     row,
-    ['usage', 'listing_type', 'type', 'availability'],
+    [
+      'usage_type',
+      'usage',
+      'listing_type',
+      'listingType',
+      'type',
+      'availability',
+      'offer_type',
+    ],
     '',
   ).toLowerCase();
-  if (usage.includes('rent')) {
+  const forRent = Boolean(row.is_for_rent ?? row.for_rent);
+  const forSale = Boolean(row.is_for_sale ?? row.for_sale);
+
+  if (forRent && !forSale) {
+    return 'For Rent';
+  }
+  if (forSale && !forRent) {
+    return 'For Sale';
+  }
+  if (usage === 'rent' || usage.includes('for rent') || usage.includes('for_rent') || usage.includes('rental')) {
+    return 'For Rent';
+  }
+  if (usage === 'sale' || usage.includes('for sale') || usage.includes('for_sale')) {
+    return 'For Sale';
+  }
+
+  const daily = pickNumber(row, [
+    'rental_daily_rate',
+    'daily_rate',
+    'rent_per_day',
+  ]);
+  const asking = pickNumber(row, ['asking_price', 'sale_price', 'price']);
+
+  if (usage === 'both') {
+    if (asking > 0) {
+      return 'For Sale';
+    }
+    if (daily > 0) {
+      return 'For Rent';
+    }
+  }
+  if (daily > 0 && !(asking > 0)) {
     return 'For Rent';
   }
   return 'For Sale';

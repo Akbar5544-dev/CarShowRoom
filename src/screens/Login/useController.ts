@@ -64,11 +64,30 @@ export function useLoginController(): LoginController {
   }, []);
 
   const onForgotPasswordPress = useCallback(() => {
-    showMessage({
-      message: 'Password reset will be available soon',
-      type: 'info',
-    });
-  }, []);
+    const trimmed = email.trim();
+    if (!trimmed) {
+      showMessage({
+        message: 'Enter your email first, then tap Forgot password',
+        type: 'warning',
+      });
+      return;
+    }
+    (async () => {
+      try {
+        await authService.forgotPassword({email: trimmed});
+        showMessage({
+          message: 'Reset code sent',
+          description: 'Check your email for the verification code.',
+          type: 'success',
+        });
+      } catch (error) {
+        showMessage({
+          message: getApiErrorMessage(error, 'Could not send reset code'),
+          type: 'danger',
+        });
+      }
+    })();
+  }, [email]);
 
   const onLogin = useCallback(async () => {
     const nextErrors = validateLoginForm(email, password);

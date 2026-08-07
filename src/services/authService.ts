@@ -32,4 +32,24 @@ export const authService = {
     const {data} = await apiClient.post(endpoints.auth.logout);
     return data;
   },
+
+  async forgotPassword(body: {email: string}) {
+    const {data} = await apiClient.post(endpoints.auth.forgotPassword, body);
+    return data;
+  },
+
+  async verifyResetCode(body: {email: string; code: string}) {
+    const {data} = await apiClient.post(endpoints.auth.verifyResetCode, body);
+    return data;
+  },
+
+  async resetPassword(body: {
+    email: string;
+    code: string;
+    password: string;
+    password_confirmation: string;
+  }) {
+    const {data} = await apiClient.post(endpoints.auth.resetPassword, body);
+    return data;
+  },
 };

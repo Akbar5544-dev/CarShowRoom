@@ -10,7 +10,9 @@ import {
   Icon,
   Screen,
   ScreenLoader,
+  VehicleAuctionBidModal,
   VehicleInventoryCard,
+  VehiclePostTypeModal,
 } from '../../../components';
 import type {VehicleInventoryItem} from '../../../components/VehicleInventoryCard';
 import {useThemedStyles, useThemeColors} from '../../../theme';
@@ -24,12 +26,20 @@ export function VehicleList() {
     summary,
     filteredVehicles,
     isLoading,
+    postTarget,
+    auctionTarget,
+    auctionDefaultBid,
+    actionBusy,
     onBackPress,
     onAuctionPress,
     onAddVehiclePress,
     onViewVehiclePress,
     onPostVehiclePress,
+    onSelectPostType,
+    onClosePostTypeModal,
     onAuctionVehiclePress,
+    onConfirmAuctionBid,
+    onCloseAuctionModal,
     onItemPress,
   } = useVehicleListController();
 
@@ -106,6 +116,22 @@ export function VehicleList() {
         windowSize={7}
         removeClippedSubviews
         keyboardShouldPersistTaps="handled"
+      />
+
+      <VehiclePostTypeModal
+        visible={postTarget != null}
+        item={postTarget}
+        submitting={actionBusy}
+        onClose={onClosePostTypeModal}
+        onSelect={onSelectPostType}
+      />
+      <VehicleAuctionBidModal
+        visible={auctionTarget != null}
+        item={auctionTarget}
+        defaultBid={auctionDefaultBid}
+        submitting={actionBusy}
+        onClose={onCloseAuctionModal}
+        onConfirm={onConfirmAuctionBid}
       />
     </Screen>
   );

@@ -47,9 +47,7 @@ export const FeedPostCard = memo(function FeedPostCard({
                 <Icon name="verifiedCheck" size={12} color={FEED_PRIMARY} />
               ) : null}
             </View>
-            <Text style={styles.meta}>
-              {post.listingType} · {post.postedAgo}
-            </Text>
+            <Text style={styles.meta}>{post.postedAgo}</Text>
           </View>
         </View>
       </View>
@@ -64,6 +62,23 @@ export const FeedPostCard = memo(function FeedPostCard({
         ) : (
           <Text style={styles.imagePlaceholder}>{post.title}</Text>
         )}
+        <View
+          style={[
+            styles.listingBadge,
+            post.listingType === 'For Rent'
+              ? styles.listingBadgeRent
+              : styles.listingBadgeSale,
+          ]}>
+          <Text
+            style={[
+              styles.listingBadgeText,
+              post.listingType === 'For Rent'
+                ? styles.listingBadgeTextRent
+                : styles.listingBadgeTextSale,
+            ]}>
+            {post.listingType}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.content}>

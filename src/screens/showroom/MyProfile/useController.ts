@@ -2,8 +2,12 @@ import {useCallback, useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {showMessage} from 'react-native-flash-message';
+import {getApiErrorMessage} from '../../../api';
 import type {HomeStackParamList} from '../../../navigation/types';
-import {authService} from '../../../services';
+import {
+  authService,
+  settingsStaffProfileService,
+} from '../../../services';
 import {asRecord, pickString, unwrapData} from '../../../utils/apiHelpers';
 import {pickFromCamera, pickFromGallery} from '../../../utils/mediaPicker';
 import type {MyProfileController, MyProfileForm} from './module';
@@ -43,9 +47,15 @@ export function useMyProfileController(): MyProfileController {
 
     async function load() {
       try {
-        const response = await authService.getMe();
-        const data = asRecord(unwrapData(response));
-        const user = asRecord(data.user ?? data);
+        let user: Record<string, any> = {};
+        try {
+          const profileRes = await settingsStaffProfileService.getProfile();
+          user = asRecord(unwrapData(profileRes));
+        } catch {
+          const response = await authService.getMe();
+          const data = asRecord(unwrapData(response));
+          user = asRecord(data.user ?? data);
+        }
         if (cancelled || !Object.keys(user).length) {
           return;
         }
@@ -56,7 +66,11 @@ export function useMyProfileController(): MyProfileController {
           phone: pickString(user, ['phone', 'phone_number'], prev.phone),
           role: roleLabel || prev.role,
           location: pickString(user, ['location', 'city'], prev.location),
-          timeZone: pickString(user, ['timezone', 'time_zone'], prev.timeZone),
+          timeZone: pickString(
+            user,
+            ['timezone', 'time_zone', 'language'],
+            prev.timeZone,
+          ),
         }));
         const remoteAvatar = pickString(
           user,
@@ -70,7 +84,7 @@ export function useMyProfileController(): MyProfileController {
           setDisplayRole(roleLabel);
         }
       } catch {
-        // Keep defaults if /me is unavailable
+        // Keep defaults if profile is unavailable
       }
     }
 
@@ -89,18 +103,29 @@ export function useMyProfileController(): MyProfileController {
   }, [navigation]);
 
   const onCancelPress = useCallback(() => {
-    setForm(INITIAL_FORM);
     navigation.goBack();
   }, [navigation]);
 
-  const onSavePress = useCallback(() => {
-    showMessage({
-      message: 'Profile synced',
-      description: 'Your personal information is up to date.',
-      type: 'success',
-    });
-    navigation.goBack();
-  }, [navigation]);
+  const onSavePress = useCallback(async () => {
+    try {
+      await settingsStaffProfileService.updateProfile({
+        name: form.fullName.trim(),
+        phone: form.phone.trim() || null,
+        language: form.timeZone.trim() || null,
+      });
+      showMessage({
+        message: 'Profile updated',
+        description: 'Your personal information is up to date.',
+        type: 'success',
+      });
+      navigation.goBack();
+    } catch (error) {
+      showMessage({
+        message: getApiErrorMessage(error, 'Failed to update profile'),
+        type: 'danger',
+      });
+    }
+  }, [form.fullName, form.phone, form.timeZone, navigation]);
 
   const onUploadPress = useCallback(async () => {
     const media = await pickFromGallery();
@@ -126,8 +151,12 @@ export function useMyProfileController(): MyProfileController {
   }, []);
 
   return {
-    userName: 'Ali',
-    dateLabel: 'Mon, Jul 13',
+    userName: form.fullName.split(/\s+/)[0] || 'User',
+    dateLabel: new Date().toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    }),
     displayName: form.fullName,
     displayRole,
     avatarUri,

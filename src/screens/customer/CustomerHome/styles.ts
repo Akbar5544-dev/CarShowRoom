@@ -262,6 +262,8 @@ export const createPostStyles = (_c: AppColors) =>
       backgroundColor: '#f3f4f6',
       alignItems: 'center',
       justifyContent: 'center',
+      position: 'relative',
+      overflow: 'hidden',
     },
     imageMedia: {
       width: '100%',
@@ -273,6 +275,32 @@ export const createPostStyles = (_c: AppColors) =>
       color: FEED_MUTED,
       textAlign: 'center',
       paddingHorizontal: 16,
+    },
+    listingBadge: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      zIndex: 2,
+    },
+    listingBadgeSale: {
+      backgroundColor: 'rgba(5, 150, 105, 0.95)',
+    },
+    listingBadgeRent: {
+      backgroundColor: 'rgba(37, 99, 235, 0.95)',
+    },
+    listingBadgeText: {
+      fontSize: 10,
+      fontWeight: '700',
+      letterSpacing: 0.2,
+    },
+    listingBadgeTextSale: {
+      color: '#fff',
+    },
+    listingBadgeTextRent: {
+      color: '#fff',
     },
     content: {
       paddingHorizontal: 12,

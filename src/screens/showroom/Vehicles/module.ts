@@ -21,6 +21,10 @@ export type VehicleListController = {
   searchQuery: string;
   filteredVehicles: VehicleInventoryItem[];
   isLoading: boolean;
+  postTarget: VehicleInventoryItem | null;
+  auctionTarget: VehicleInventoryItem | null;
+  auctionDefaultBid: string;
+  actionBusy: boolean;
   setSearchQuery: (text: string) => void;
   onBackPress: () => void;
   onFilterPress: () => void;
@@ -28,6 +32,13 @@ export type VehicleListController = {
   onAddVehiclePress: () => void;
   onViewVehiclePress: (item: VehicleInventoryItem) => void;
   onPostVehiclePress: (item: VehicleInventoryItem) => void;
+  onSelectPostType: (choice: 'sale' | 'rent') => void;
+  onClosePostTypeModal: () => void;
   onAuctionVehiclePress: (item: VehicleInventoryItem) => void;
+  onConfirmAuctionBid: (values: {
+    starting_bid: string;
+    ends_at: string;
+  }) => void;
+  onCloseAuctionModal: () => void;
   onItemPress: (item: VehicleInventoryItem) => void;
 };
